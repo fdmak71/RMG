@@ -23,11 +23,9 @@ ControllerWidget::ControllerWidget(QWidget* parent) : QWidget(parent)
     int w = this->size().width();
     int h = this->size().height();
 
-
     QPixmap image = QIcon(":Resource/Controller.svg").pixmap(QSize(w, h));
 
     this->imageLabel->setPixmap(image);
-    this->imageLabel->setMinimumSize(QSize(w, h));
 }
 
 ControllerWidget::~ControllerWidget()
