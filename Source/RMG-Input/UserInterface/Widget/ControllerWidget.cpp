@@ -33,13 +33,11 @@ ControllerWidget::ControllerWidget(QWidget* parent) : QWidget(parent)
     tmpSize = this->size();
 
     QPixmap image = QIcon(":Resource/Controller.svg").pixmap(QSize(w, h));
-
     this->imageLabel->setPixmap(image);
 
-    this->inputDeviceComboBox->addItem("Keyboard", -1);
-
-
-    //this->inputDeviceComboBox->addItem("Keyboard", blah);
+    this->deadZoneSlider->setValue(25);
+    this->analogStickRangeSlider->setValue(100);
+    this->controllerPluggedCheckBox->setChecked(false);
 }
 
 ControllerWidget::~ControllerWidget()
@@ -84,15 +82,49 @@ void ControllerWidget::on_analogStickRangeSlider_valueChanged(int value)
     this->analogStickRangeLabel->setText(text);
 }
 
+void ControllerWidget::on_controllerPluggedCheckBox_toggled(bool value)
+{
+    QWidget* buttonList[] = {
+        // dpad
+        this->dpadUpButton,
+        this->dpadDownButton,
+        this->dpadLeftButton,
+        this->dpadRightButton,
+        // analog stick
+        this->analogStickUpButton,
+        this->analogStickDownButton,
+        this->analogStickLeftButton,
+        this->analogStickRightButton,
+        this->analogStickRangeSlider,
+        // cbuttons
+        this->cbuttonUpButton,
+        this->cbuttonDownButton,
+        this->cbuttonLeftButton,
+        this->cbuttonRightButton,
+        // triggers
+        this->leftTriggerButton,
+        this->rightTriggerButton,
+        this->zTriggerButton,
+        // buttons
+        this->aButton,
+        this->bButton,
+        this->startButton,
+        // misc UI elements
+        this->deadZoneSlider,
+        this->setupButton,
+        this->pushButton_16,
+        this->inputDeviceComboBox
+    };
+
+    for (auto& widget : buttonList)
+    {
+        widget->setEnabled(value);
+    }
+}
+
+
 void ControllerWidget::on_setupButton_clicked()
 {
-    std::cout << "on_setupButton_clicked" << std::endl;
-
-    QSize size = this->label->size();
-
-    QPixmap image = QIcon(":Resource/Controller_Pressed_A.svg").pixmap(tmpSize);
-    this->imageLabel->setPixmap(image);
-
 }
 
 QPixmap createImageWithOverlay(QPixmap& baseImage, QList<QPixmap> overlayImages);

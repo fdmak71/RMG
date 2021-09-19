@@ -29,6 +29,8 @@ public:
 public slots:
     void on_deadZoneSlider_valueChanged(int value);
     void on_analogStickRangeSlider_valueChanged(int value);
+
+    void on_controllerPluggedCheckBox_toggled(bool value);
     void on_setupButton_clicked();
 
     void keyPressEvent(QKeyEvent *event);
