@@ -23,7 +23,16 @@ public:
     ControllerWidget(QWidget* parent);
     ~ControllerWidget();
 
-    void resizeEvent(QResizeEvent *event) override;
+    void ClearInputDevices();
+    void AddInputDevice(QString name, int num);
+
+public slots:
+    void on_deadZoneSlider_valueChanged(int value);
+    void on_analogStickRangeSlider_valueChanged(int value);
+    void on_setupButton_clicked();
+
+    void keyPressEvent(QKeyEvent *event);
+    void keyReleaseEvent(QKeyEvent *event);
 };
 }
 }

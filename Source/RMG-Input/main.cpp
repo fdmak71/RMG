@@ -10,9 +10,20 @@
 #include <UserInterface/MainDialog.hpp>
 
 #include <QApplication>
+#include <SDL.h>
 
 int main(int argc, char **argv)
 {
+    if (!SDL_WasInit(SDL_INIT_GAMECONTROLLER))
+    {
+        SDL_Init(SDL_INIT_GAMECONTROLLER);
+    }
+
+    if (!SDL_WasInit(SDL_INIT_HAPTIC))
+    {
+        SDL_Init(SDL_INIT_HAPTIC);
+    }
+
     QApplication app(argc, argv);
 
     UserInterface::MainDialog dialog(nullptr);

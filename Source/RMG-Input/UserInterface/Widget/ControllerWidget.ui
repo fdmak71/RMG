@@ -35,36 +35,37 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
-         <widget class="QComboBox" name="comboBox">
+         <widget class="QComboBox" name="inputDeviceComboBox">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-          <item>
-           <property name="text">
-            <string>Xbox One Controller</string>
-           </property>
-          </item>
          </widget>
         </item>
        </layout>
       </widget>
      </item>
      <item>
-      <widget class="QGroupBox" name="groupBox_5">
+      <widget class="QGroupBox" name="deadZoneGroupBox">
        <property name="title">
         <string>Deadzone: 25%</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_5">
         <item>
-         <widget class="QSlider" name="horizontalSlider">
+         <widget class="QSlider" name="deadZoneSlider">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="minimum">
+           <number>0</number>
+          </property>
+          <property name="maximum">
+           <number>100</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -141,7 +142,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_18">
+             <widget class="QPushButton" name="dpadUpButton">
               <property name="text">
                <string>PushButton</string>
               </property>
@@ -159,7 +160,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_6">
+             <widget class="QPushButton" name="dpadDownButton">
               <property name="text">
                <string>PushButton</string>
               </property>
@@ -177,7 +178,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_7">
+             <widget class="QPushButton" name="dpadLeftButton">
               <property name="text">
                <string>PushButton</string>
               </property>
@@ -195,7 +196,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_19">
+             <widget class="QPushButton" name="dpadRightButton">
               <property name="text">
                <string>PushButton</string>
               </property>
@@ -234,7 +235,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_8">
+             <widget class="QPushButton" name="analogStickUpButton">
               <property name="text">
                <string>PushButton</string>
               </property>
@@ -252,7 +253,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_20">
+             <widget class="QPushButton" name="analogStickDownButton">
               <property name="text">
                <string>PushButton</string>
               </property>
@@ -270,7 +271,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_21">
+             <widget class="QPushButton" name="analogStickLeftButton">
               <property name="text">
                <string>PushButton</string>
               </property>
@@ -288,7 +289,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_9">
+             <widget class="QPushButton" name="analogStickRightButton">
               <property name="text">
                <string>PushButton</string>
               </property>
@@ -299,21 +300,27 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_5">
             <item>
-             <widget class="QLabel" name="label_4">
+             <widget class="QLabel" name="label_5">
               <property name="text">
                <string>Range: </string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QSlider" name="horizontalSlider_2">
+             <widget class="QSlider" name="analogStickRangeSlider">
+              <property name="minimum">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <number>100</number>
+              </property>
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_5">
+             <widget class="QLabel" name="analogStickRangeLabel">
               <property name="text">
                <string>100%</string>
               </property>
@@ -369,7 +376,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton_13">
+            <widget class="QPushButton" name="leftTriggerButton">
              <property name="text">
               <string>PushButton</string>
              </property>
@@ -400,7 +407,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton_14">
+            <widget class="QPushButton" name="rightTriggerButton">
              <property name="text">
               <string>PushButton</string>
              </property>
@@ -493,7 +500,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton">
+            <widget class="QPushButton" name="startButton">
              <property name="text">
               <string>PushButton</string>
              </property>
@@ -525,7 +532,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="pushButton_2">
+              <widget class="QPushButton" name="zTriggerButton">
                <property name="text">
                 <string>PushButton</string>
                </property>
@@ -589,7 +596,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_11">
+             <widget class="QPushButton" name="cbuttonUpButton">
               <property name="text">
                <string>PushButton</string>
               </property>
@@ -607,7 +614,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_10">
+             <widget class="QPushButton" name="cbuttonDownButton">
               <property name="text">
                <string>PushButton</string>
               </property>
@@ -625,7 +632,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_22">
+             <widget class="QPushButton" name="cbuttonLeftButton">
               <property name="text">
                <string>PushButton</string>
               </property>
@@ -643,7 +650,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_12">
+             <widget class="QPushButton" name="cbuttonRightButton">
               <property name="text">
                <string>PushButton</string>
               </property>
@@ -670,7 +677,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_3">
+             <widget class="QPushButton" name="bButton">
               <property name="text">
                <string>PushButton</string>
               </property>
@@ -688,7 +695,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_4">
+             <widget class="QPushButton" name="aButton">
               <property name="text">
                <string>PushButton</string>
               </property>
@@ -713,7 +720,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_5">
+        <widget class="QPushButton" name="setupButton">
          <property name="text">
           <string>Setup</string>
          </property>

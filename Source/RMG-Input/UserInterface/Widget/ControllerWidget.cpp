@@ -11,10 +11,17 @@
 
 #include <QPixmap>
 #include <QResizeEvent>
-#include <qcolor.h>
-#include <qnamespace.h>
+#include <SDL.h>
 
 using namespace UserInterface::Widget;
+
+struct tmp
+{
+    int a;
+    int b;
+};
+
+static QSize tmpSize;
 
 ControllerWidget::ControllerWidget(QWidget* parent) : QWidget(parent)
 {
@@ -23,9 +30,16 @@ ControllerWidget::ControllerWidget(QWidget* parent) : QWidget(parent)
     int w = this->size().width();
     int h = this->size().height();
 
+    tmpSize = this->size();
+
     QPixmap image = QIcon(":Resource/Controller.svg").pixmap(QSize(w, h));
 
     this->imageLabel->setPixmap(image);
+
+    this->inputDeviceComboBox->addItem("Keyboard", -1);
+
+
+    //this->inputDeviceComboBox->addItem("Keyboard", blah);
 }
 
 ControllerWidget::~ControllerWidget()
@@ -35,18 +49,154 @@ ControllerWidget::~ControllerWidget()
 
 #include <iostream>
 
-void ControllerWidget::resizeEvent(QResizeEvent *event)
+void ControllerWidget::ClearInputDevices()
 {
-    QWidget::resizeEvent(event);
+    this->inputDeviceComboBox->clear();
+}
 
-    int width = event->size().width() - event->oldSize().width();
-    int height = event->size().height() - event->oldSize().height();
+void ControllerWidget::AddInputDevice(QString deviceName, int num)
+{
+    QString name = deviceName;
 
-    QSize oldImageLabelSize = this->imageLabel->size();
-    QSize newImageLabelSize = QSize(oldImageLabelSize.width() + width, oldImageLabelSize.height() + height);
+    if (num != -1)
+    {
+        name += " (";
+        name += QString::number(num);
+        name += ")";
+    }
 
-    std::cout << "oldSize " << event->oldSize().width() << "x" << event->oldSize().height() << std::endl;
-    std::cout << "newSize " << event->size().width() << "x" << event->size().height() << std::endl;
-    std::cout << "oldImageLabelSize " << oldImageLabelSize.width() << "x" << oldImageLabelSize.height() << std::endl;
-    std::cout << "newImageLabelSize " << newImageLabelSize.width() << "x" << newImageLabelSize.height() << std::endl;
+    this->inputDeviceComboBox->addItem(name, num);
+}
+
+void ControllerWidget::on_deadZoneSlider_valueChanged(int value)
+{
+    QString title = tr("Deadzone: ");
+    title += QString::number(value);
+    title += "%";
+
+    this->deadZoneGroupBox->setTitle(title);
+}
+
+void ControllerWidget::on_analogStickRangeSlider_valueChanged(int value)
+{
+    QString text = QString::number(value);
+    text += "%";
+    this->analogStickRangeLabel->setText(text);
+}
+
+void ControllerWidget::on_setupButton_clicked()
+{
+    std::cout << "on_setupButton_clicked" << std::endl;
+
+    QSize size = this->label->size();
+
+    QPixmap image = QIcon(":Resource/Controller_Pressed_A.svg").pixmap(tmpSize);
+    this->imageLabel->setPixmap(image);
+
+}
+
+QPixmap createImageWithOverlay(QPixmap& baseImage, QList<QPixmap> overlayImages);
+
+QList<QString> tmpList;
+
+struct
+{
+    int key;
+    QString icon;
+} keybindings[] = 
+{
+    { Qt::Key_1, ":Resource/Controller_Pressed_A.svg" },
+    { Qt::Key_2, ":Resource/Controller_Pressed_B.svg" },
+    { Qt::Key_3, ":Resource/Controller_Pressed_Start.svg" },
+    { Qt::Key_4, ":Resource/Controller_Pressed_AnalogStick.svg" },
+    { Qt::Key_W, ":Resource/Controller_Pressed_DpadUp.svg" },
+    { Qt::Key_S, ":Resource/Controller_Pressed_DpadDown.svg" },
+    { Qt::Key_A, ":Resource/Controller_Pressed_DpadLeft.svg" },
+    { Qt::Key_D, ":Resource/Controller_Pressed_DpadRight.svg" },
+    { Qt::Key_I, ":Resource/Controller_Pressed_CButtonUp.svg" },
+    { Qt::Key_K, ":Resource/Controller_Pressed_CButtonDown.svg" },
+    { Qt::Key_J, ":Resource/Controller_Pressed_CButtonLeft.svg" },
+    { Qt::Key_L, ":Resource/Controller_Pressed_CButtonRight.svg" },
+    { Qt::Key_Q, ":Resource/Controller_Pressed_LeftTrigger.svg" },
+    { Qt::Key_E, ":Resource/Controller_Pressed_RightTrigger.svg" },
+};
+
+#include <QKeyEvent>
+void ControllerWidget::keyPressEvent(QKeyEvent *event)
+{
+    QPixmap image1 = QIcon(":Resource/Controller.svg").pixmap(tmpSize);
+
+    QList<QString> images;
+
+    int key = event->key();
+    for (auto& keybinding : keybindings)
+    {
+        if (keybinding.key == key)
+        {
+            images.append(keybinding.icon);
+        }
+    }
+
+    if (tmpList != images) {
+        QList<QPixmap> pixMaps;
+
+        for (auto& str : images)
+        {
+            pixMaps.append(QIcon(str).pixmap(tmpSize));
+        }
+
+        QPixmap tmp = createImageWithOverlay(image1, pixMaps);
+        this->imageLabel->setPixmap(tmp);
+
+        tmpList = images;
+    }
+}
+
+void ControllerWidget::keyReleaseEvent(QKeyEvent *event)
+{
+    QPixmap image1 = QIcon(":Resource/Controller.svg").pixmap(tmpSize);
+
+    QList<QString> images(tmpList);
+
+    int key = event->key();
+    for (auto& keybinding : keybindings)
+    {
+        if (keybinding.key == key)
+        {
+            images.removeAll(keybinding.icon);
+        }
+    }
+
+    if (tmpList != images) {
+        QList<QPixmap> pixMaps;
+
+        for (auto& str : images)
+        {
+            pixMaps.append(QIcon(str).pixmap(tmpSize));
+        }
+
+        QPixmap tmp = createImageWithOverlay(image1, pixMaps);
+        this->imageLabel->setPixmap(tmp);
+
+        tmpList = images;
+    }
+}
+
+#include <QPainter>
+
+QPixmap createImageWithOverlay(QPixmap& baseImage, QList<QPixmap> overlayImages)
+{
+    QPixmap imageWithOverlay = QPixmap(baseImage);
+    QPainter painter(&imageWithOverlay);
+
+    // paint all overlayImages on top of baseImage
+    for (auto& overlayImage : overlayImages)
+    {
+        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        painter.drawPixmap(0, 0, overlayImage);
+    }
+
+    painter.end();
+
+    return imageWithOverlay;
 }
