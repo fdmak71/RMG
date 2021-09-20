@@ -23,7 +23,7 @@ ControllerWidget::ControllerWidget(QWidget* parent) : QWidget(parent)
     this->setupUi(this);
 
     this->controllerPixmap = QIcon(":Resource/Controller_NoAnalogStick.svg").pixmap(this->size());
-    this->deadZoneSlider->setValue(10);
+    this->deadZoneSlider->setValue(15);
     this->analogStickRangeSlider->setValue(100);
     this->controllerPluggedCheckBox->setChecked(false);
 
@@ -146,7 +146,7 @@ void ControllerWidget::on_analogStickRangeSlider_valueChanged(int value)
 
 void ControllerWidget::on_controllerPluggedCheckBox_toggled(bool value)
 {
-    QWidget* buttonList[] = {
+    QWidget* widgetList[] = {
         // dpad
         this->dpadUpButton,
         this->dpadDownButton,
@@ -178,7 +178,7 @@ void ControllerWidget::on_controllerPluggedCheckBox_toggled(bool value)
         this->inputDeviceComboBox
     };
 
-    for (auto& widget : buttonList)
+    for (auto& widget : widgetList)
     {
         widget->setEnabled(value);
     }

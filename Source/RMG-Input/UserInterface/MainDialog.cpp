@@ -74,21 +74,6 @@ void MainDialog::searchForInputDevices()
 
 SDL_GameController* MainDialog::openController(QString deviceName, int deviceNum)
 {
-    struct controller_t
-    {
-        QString deviceName;
-        int deviceNum;
-
-        bool operator==(controller_t b)
-        {
-            return deviceName == b.deviceName && 
-                    deviceNum == b.deviceNum;
-        }
-    };
-
-    QList<controller_t> controllerList;
-    bool useDeviceIndex = false;
-
     // find each controller    
     for (int i = 0; i < SDL_NumJoysticks(); i++)
     {
@@ -103,49 +88,14 @@ SDL_GameController* MainDialog::openController(QString deviceName, int deviceNum
         name = SDL_GameControllerNameForIndex(i);
         if (name != nullptr)
         {
-            controller_t controller = {QString(name), i};
-            controllerList.append(controller);
-        }
-    }
-
-    // check if controllerList has duplicate names
-    // if it has duplicates, use the device index aswell
-    QList<controller_t> tmpControllerList;
-    for (auto& controller : controllerList)
-    {
-        if (tmpControllerList.contains(controller))
-        {
-            useDeviceIndex = true;
-            break;
-        }
-
-        tmpControllerList.append(controller);
-    }
-    tmpControllerList.clear();
-
-    // loop open each device and see if any match
-    // if so, try to open the controller
-    for (auto& controller : controllerList)
-    {
-        if (useDeviceIndex)
-        {
-            if (controller.deviceName == deviceName &&
-                controller.deviceNum == deviceNum)
+            if (deviceName == QString(name) &&
+                deviceNum == i)
             {
-                return SDL_GameControllerOpen(deviceNum);
-            }
-        }
-        else
-        {
-            if (controller.deviceName == deviceName)
-            {
-                return SDL_GameControllerOpen(deviceNum);
+                return SDL_GameControllerOpen(i);
             }
         }
     }
 
-    // when we haven't found anything,
-    // return nullptr
     return nullptr;
 }
 
