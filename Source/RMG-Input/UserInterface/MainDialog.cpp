@@ -8,7 +8,6 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "MainDialog.hpp"
-#include "SDL_gamecontroller.h"
 #include "Widget/ControllerWidget.hpp"
 
 #include <SDL.h>

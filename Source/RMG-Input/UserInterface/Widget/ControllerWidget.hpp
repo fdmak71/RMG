@@ -10,8 +10,8 @@
 #ifndef CONTROLLERWIDGET_H
 #define CONTROLLERWIDGET_H
 
-#include "SDL_gamecontroller.h"
 #include "ui_ControllerWidget.h"
+
 #include <SDL.h>
 
 namespace UserInterface

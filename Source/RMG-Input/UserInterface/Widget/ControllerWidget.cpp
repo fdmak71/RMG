@@ -8,13 +8,11 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "ControllerWidget.hpp"
-#include "SDL_gamecontroller.h"
 
 #include <QPixmap>
 #include <QResizeEvent>
 #include <QPainter>
 #include <SDL.h>
-#include <qpixmap.h>
 
 #define SDL_AXIS_PEAK 32768
 
@@ -22,7 +20,7 @@ using namespace UserInterface::Widget;
 
 ControllerWidget::ControllerWidget(QWidget* parent) : QWidget(parent)
 {
-	this->setupUi(this);
+    this->setupUi(this);
 
     this->controllerPixmap = QIcon(":Resource/Controller_NoAnalogStick.svg").pixmap(this->size());
     this->deadZoneSlider->setValue(10);
