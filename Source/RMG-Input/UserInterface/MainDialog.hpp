@@ -13,15 +13,25 @@
 #include <QDialog>
 
 #include "ui_MainDialog.h"
+#include "Widget/ControllerWidget.hpp"
 
 namespace UserInterface
 {
 class MainDialog : public QDialog, private Ui::MainDialog
 {
 Q_OBJECT
- public:
+private:
+   QTimer* inputPollTimer;
+
+   void searchForInputDevices();
+   SDL_GameController* openController(QString deviceName, int deviceNum);
+
+public:
     MainDialog(QWidget *parent);
     ~MainDialog(void);
+
+public slots:
+   void on_InputPollTimer_triggered();
 };
 }
 

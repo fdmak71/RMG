@@ -11,6 +11,7 @@
 #define CONTROLLERWIDGET_H
 
 #include "ui_ControllerWidget.h"
+#include <SDL.h>
 
 namespace UserInterface
 {
@@ -19,22 +20,26 @@ namespace Widget
 class ControllerWidget : public QWidget, Ui::ControllerWidget
 {
     Q_OBJECT
+
+private:
+    QList<QString> inputDeviceNameList;
+
 public:
     ControllerWidget(QWidget* parent);
     ~ControllerWidget();
 
     void ClearInputDevices();
-    void AddInputDevice(QString name, int num);
+    void AddInputDevice(QString deviceName, int deviceNum);
+    void GetCurrentInputDevice(QString& deviceName, int& deviceNum);
+    void SetButtonState(SDL_GameControllerButton button, int state);
+    bool IsPluggedIn();
 
-public slots:
+private slots:
     void on_deadZoneSlider_valueChanged(int value);
     void on_analogStickRangeSlider_valueChanged(int value);
 
     void on_controllerPluggedCheckBox_toggled(bool value);
     void on_setupButton_clicked();
-
-    void keyPressEvent(QKeyEvent *event);
-    void keyReleaseEvent(QKeyEvent *event);
 };
 }
 }

@@ -49,21 +49,30 @@ ControllerWidget::~ControllerWidget()
 
 void ControllerWidget::ClearInputDevices()
 {
+    this->inputDeviceNameList.clear();
     this->inputDeviceComboBox->clear();
 }
 
-void ControllerWidget::AddInputDevice(QString deviceName, int num)
+void ControllerWidget::AddInputDevice(QString deviceName, int deviceNum)
 {
     QString name = deviceName;
 
-    if (num != -1)
+    if (deviceNum != -1)
     {
         name += " (";
-        name += QString::number(num);
+        name += QString::number(deviceNum);
         name += ")";
     }
 
-    this->inputDeviceComboBox->addItem(name, num);
+    this->inputDeviceNameList.append(deviceName);
+    this->inputDeviceComboBox->addItem(name, deviceNum);
+}
+
+void ControllerWidget::GetCurrentInputDevice(QString& deviceName, int& deviceNum)
+{
+    int currentIndex = this->inputDeviceComboBox->currentIndex();
+    deviceName = this->inputDeviceNameList.at(currentIndex);
+    deviceNum = this->inputDeviceComboBox->itemData(currentIndex).toInt();
 }
 
 void ControllerWidget::on_deadZoneSlider_valueChanged(int value)
@@ -133,39 +142,43 @@ QList<QString> tmpList;
 
 struct
 {
-    int key;
+    SDL_GameControllerButton button;
     QString icon;
-} keybindings[] = 
+} keybindings2[] = 
 {
-    { Qt::Key_1, ":Resource/Controller_Pressed_A.svg" },
-    { Qt::Key_2, ":Resource/Controller_Pressed_B.svg" },
-    { Qt::Key_3, ":Resource/Controller_Pressed_Start.svg" },
-    { Qt::Key_4, ":Resource/Controller_Pressed_AnalogStick.svg" },
-    { Qt::Key_W, ":Resource/Controller_Pressed_DpadUp.svg" },
-    { Qt::Key_S, ":Resource/Controller_Pressed_DpadDown.svg" },
-    { Qt::Key_A, ":Resource/Controller_Pressed_DpadLeft.svg" },
-    { Qt::Key_D, ":Resource/Controller_Pressed_DpadRight.svg" },
-    { Qt::Key_I, ":Resource/Controller_Pressed_CButtonUp.svg" },
-    { Qt::Key_K, ":Resource/Controller_Pressed_CButtonDown.svg" },
-    { Qt::Key_J, ":Resource/Controller_Pressed_CButtonLeft.svg" },
-    { Qt::Key_L, ":Resource/Controller_Pressed_CButtonRight.svg" },
-    { Qt::Key_Q, ":Resource/Controller_Pressed_LeftTrigger.svg" },
-    { Qt::Key_E, ":Resource/Controller_Pressed_RightTrigger.svg" },
+    { SDL_CONTROLLER_BUTTON_A, ":Resource/Controller_Pressed_A.svg" },
+    { SDL_CONTROLLER_BUTTON_B, ":Resource/Controller_Pressed_B.svg" },
+    { SDL_CONTROLLER_BUTTON_START, ":Resource/Controller_Pressed_Start.svg" },
+  //  { Qt::Key_4, ":Resource/Controller_Pressed_AnalogStick.svg" },
+    { SDL_CONTROLLER_BUTTON_DPAD_UP, ":Resource/Controller_Pressed_DpadUp.svg" },
+    { SDL_CONTROLLER_BUTTON_DPAD_DOWN, ":Resource/Controller_Pressed_DpadDown.svg" },
+    { SDL_CONTROLLER_BUTTON_DPAD_LEFT, ":Resource/Controller_Pressed_DpadLeft.svg" },
+    { SDL_CONTROLLER_BUTTON_DPAD_RIGHT, ":Resource/Controller_Pressed_DpadRight.svg" },
+  //  { Qt::Key_I, ":Resource/Controller_Pressed_CButtonUp.svg" },
+  //  { Qt::Key_K, ":Resource/Controller_Pressed_CButtonDown.svg" },
+  //  { Qt::Key_J, ":Resource/Controller_Pressed_CButtonLeft.svg" },
+  //  { Qt::Key_L, ":Resource/Controller_Pressed_CButtonRight.svg" },
+    { SDL_CONTROLLER_BUTTON_LEFTSHOULDER, ":Resource/Controller_Pressed_LeftTrigger.svg" },
+    { SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, ":Resource/Controller_Pressed_RightTrigger.svg" },
 };
 
-#include <QKeyEvent>
-void ControllerWidget::keyPressEvent(QKeyEvent *event)
+void ControllerWidget::SetButtonState(SDL_GameControllerButton button, int state)
 {
     QPixmap image1 = QIcon(":Resource/Controller.svg").pixmap(tmpSize);
 
-    QList<QString> images;
+    QList<QString> images(tmpList);
 
-    int key = event->key();
-    for (auto& keybinding : keybindings)
+    for (auto& keybinding : keybindings2)
     {
-        if (keybinding.key == key)
+        if (keybinding.button == button)
         {
-            images.append(keybinding.icon);
+            if (state && !images.contains(keybinding.icon))
+            {
+                images.append(keybinding.icon);
+            } else if (!state && images.contains(keybinding.icon))
+            {
+                images.removeOne(keybinding.icon);
+            }
         }
     }
 
@@ -184,34 +197,9 @@ void ControllerWidget::keyPressEvent(QKeyEvent *event)
     }
 }
 
-void ControllerWidget::keyReleaseEvent(QKeyEvent *event)
+bool ControllerWidget::IsPluggedIn()
 {
-    QPixmap image1 = QIcon(":Resource/Controller.svg").pixmap(tmpSize);
-
-    QList<QString> images(tmpList);
-
-    int key = event->key();
-    for (auto& keybinding : keybindings)
-    {
-        if (keybinding.key == key)
-        {
-            images.removeAll(keybinding.icon);
-        }
-    }
-
-    if (tmpList != images) {
-        QList<QPixmap> pixMaps;
-
-        for (auto& str : images)
-        {
-            pixMaps.append(QIcon(str).pixmap(tmpSize));
-        }
-
-        QPixmap tmp = createImageWithOverlay(image1, pixMaps);
-        this->imageLabel->setPixmap(tmp);
-
-        tmpList = images;
-    }
+    return this->controllerPluggedCheckBox->isChecked();
 }
 
 #include <QPainter>
