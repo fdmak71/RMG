@@ -1,7 +1,7 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
-  <file>Resource/Controller.svg</file>
-  <file>Resource/Controller_Pressed_AnalogStick.svg</file>
+  <file>Resource/Controller_NoAnalogStick.svg</file>
+  <file>Resource/Controller_AnalogStick.svg</file>
   <file>Resource/Controller_Pressed_A.svg</file>
   <file>Resource/Controller_Pressed_B.svg</file>
   <file>Resource/Controller_Pressed_DpadUp.svg</file>

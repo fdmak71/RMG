@@ -8,10 +8,13 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "ControllerWidget.hpp"
+#include "SDL_gamecontroller.h"
 
 #include <QPixmap>
 #include <QResizeEvent>
+#include <QPainter>
 #include <SDL.h>
+#include <qpixmap.h>
 
 using namespace UserInterface::Widget;
 
@@ -32,17 +35,77 @@ ControllerWidget::ControllerWidget(QWidget* parent) : QWidget(parent)
 
     tmpSize = this->size();
 
-    QPixmap image = QIcon(":Resource/Controller.svg").pixmap(QSize(w, h));
-    this->imageLabel->setPixmap(image);
+    this->controllerPixmap = QIcon(":Resource/Controller_NoAnalogStick.svg").pixmap(QSize(w, h));
 
     this->deadZoneSlider->setValue(25);
     this->analogStickRangeSlider->setValue(100);
     this->controllerPluggedCheckBox->setChecked(false);
+
+    this->drawControllerImage();
 }
 
 ControllerWidget::~ControllerWidget()
 {
 
+}
+#define AXIS_PEAK 32768
+#include <iostream>
+void ControllerWidget::drawControllerImage()
+{
+    QPixmap finalControllerPixmap = QPixmap(this->controllerPixmap);
+    QSize controllerPixmapSize = this->controllerPixmap.size();
+    QPainter painter(&finalControllerPixmap);
+    // paint all overlayImages on top of baseImage
+    for (auto& buttonImageUri : this->controllerImages)
+    {
+        QPixmap buttonImage = QIcon(buttonImageUri).pixmap(controllerPixmapSize);
+        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        painter.drawPixmap(0, 0, buttonImage);
+    }
+    // render stick w/ offset
+    QPixmap stickImage = QIcon(":Resource/Controller_AnalogStick.svg").pixmap(controllerPixmapSize);
+    painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+
+    int offsetx = 0, offsety = 0;
+    int width = controllerPixmapSize.width();
+    int height = controllerPixmapSize.height();
+    // normal x=3093.517 y=3509.456
+    // bottom center x=3093.517 y=3915.018 (x%=0 y%=10.925)
+    // top center x=3093.517 y=3103.893 (x%=0 y%=12.265)
+    // right center x=3499.075 y=3509.456 (x%=12.3034 y%=0)
+    // left center x=2687.959 y=3509.456 (x%=12.3034, y%=0)
+
+    const int maxOffsety = (int)((double)(height * 0.12265f) / 2);
+    const int maxOffsetx = maxOffsety;
+    //const int maxOffsetx = (int)((double)(height * 0.123034f) / 2);
+
+    for (auto& axis : currentAxisList)
+    {
+        int percentage = (double)((float)axis.state / AXIS_PEAK * 100);
+
+        if (axis.axis == SDL_CONTROLLER_AXIS_LEFTX)
+        {
+            offsetx = ((float)maxOffsetx / 100 * percentage);
+        } else if (axis.axis == SDL_CONTROLLER_AXIS_LEFTY)
+        {
+            offsety = ((float)maxOffsety / 100 * percentage);
+        }
+    }
+
+
+    //offsety = (int)((double)(height * 0.123034f) / 2);
+    //offsetx = -(int)((double)(width * 0.123034f) / 2);
+
+    std::cout << "width: " << width << ", height: " << height << std::endl;
+    std::cout << "offsetx: " << offsetx << ", offsety: " << offsety << std::endl;
+    std::cout << offsety << std::endl;
+    //offsetx = 
+
+    painter.drawPixmap(offsetx, offsety, stickImage);
+
+    painter.end();
+
+    this->imageLabel->setPixmap(finalControllerPixmap);
 }
 
 #include <iostream>
@@ -164,59 +227,49 @@ struct
 
 void ControllerWidget::SetButtonState(SDL_GameControllerButton button, int state)
 {
-    QPixmap image1 = QIcon(":Resource/Controller.svg").pixmap(tmpSize);
-
-    QList<QString> images(tmpList);
+    bool needsDraw = false;
 
     for (auto& keybinding : keybindings2)
     {
         if (keybinding.button == button)
         {
-            if (state && !images.contains(keybinding.icon))
+            if (state && !controllerImages.contains(keybinding.icon))
             {
-                images.append(keybinding.icon);
-            } else if (!state && images.contains(keybinding.icon))
+                controllerImages.append(keybinding.icon);
+                needsDraw = true;
+            } else if (!state && controllerImages.contains(keybinding.icon))
             {
-                images.removeOne(keybinding.icon);
+                controllerImages.removeOne(keybinding.icon);
+                needsDraw = true;
             }
         }
     }
 
-    if (tmpList != images) {
-        QList<QPixmap> pixMaps;
-
-        for (auto& str : images)
-        {
-            pixMaps.append(QIcon(str).pixmap(tmpSize));
-        }
-
-        QPixmap tmp = createImageWithOverlay(image1, pixMaps);
-        this->imageLabel->setPixmap(tmp);
-
-        tmpList = images;
+    if (needsDraw) {
+        this->drawControllerImage();
     }
+}
+
+void ControllerWidget::SetAxisState(SDL_GameControllerAxis axis, int16_t state)
+{
+    axis_t axisType = {axis, state};
+
+    currentAxisList.append(axisType);
+
+    this->drawControllerImage();
+}
+
+void ControllerWidget::SetMaxAxis(int16_t max)
+{
+    this->maxAxis = max;
+}
+
+void ControllerWidget::ClearAxisState()
+{
+    currentAxisList.clear();
 }
 
 bool ControllerWidget::IsPluggedIn()
 {
     return this->controllerPluggedCheckBox->isChecked();
-}
-
-#include <QPainter>
-
-QPixmap createImageWithOverlay(QPixmap& baseImage, QList<QPixmap> overlayImages)
-{
-    QPixmap imageWithOverlay = QPixmap(baseImage);
-    QPainter painter(&imageWithOverlay);
-
-    // paint all overlayImages on top of baseImage
-    for (auto& overlayImage : overlayImages)
-    {
-        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-        painter.drawPixmap(0, 0, overlayImage);
-    }
-
-    painter.end();
-
-    return imageWithOverlay;
 }

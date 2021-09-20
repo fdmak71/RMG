@@ -8,6 +8,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "MainDialog.hpp"
+#include "SDL_gamecontroller.h"
 #include "Widget/ControllerWidget.hpp"
 
 #include <SDL.h>
@@ -235,5 +236,19 @@ void MainDialog::on_InputPollTimer_triggered()
     {
         int buttonState = SDL_GameControllerGetButton(currentController, button);
         controllerWidget->SetButtonState(button, buttonState);
+    }
+
+    SDL_GameControllerAxis axisList[] = {
+        SDL_CONTROLLER_AXIS_LEFTX,
+        SDL_CONTROLLER_AXIS_LEFTY
+    };
+
+    controllerWidget->ClearAxisState();
+    //controllerWidget->SetMaxAxis(SDL_GameControllerGetAxis(currentController, SDL_CONTROLLER_AXIS_MAX));
+    for (auto& axis : axisList)
+    {
+        int64_t axisState = SDL_GameControllerGetAxis(currentController, axis);
+        controllerWidget->SetAxisState(axis, axisState);
+        std::cout << "axis: " << axis << ", axisState: " << axisState << std::endl;
     }
 }

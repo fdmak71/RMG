@@ -10,6 +10,7 @@
 #ifndef CONTROLLERWIDGET_H
 #define CONTROLLERWIDGET_H
 
+#include "SDL_gamecontroller.h"
 #include "ui_ControllerWidget.h"
 #include <SDL.h>
 
@@ -22,8 +23,25 @@ class ControllerWidget : public QWidget, Ui::ControllerWidget
     Q_OBJECT
 
 private:
-    QList<QString> inputDeviceNameList;
+    struct axis_t
+    {
+        SDL_GameControllerAxis axis;
+        int16_t state;
 
+        bool operator==(axis_t b)
+        {
+            return axis == b.axis && 
+                    state == b.state;
+        }
+    };
+
+    int16_t maxAxis;
+    QList<QString> inputDeviceNameList;
+    QPixmap controllerPixmap;
+    QList<QString> controllerImages;
+    QList<axis_t> currentAxisList;
+
+    void drawControllerImage();
 public:
     ControllerWidget(QWidget* parent);
     ~ControllerWidget();
@@ -32,6 +50,9 @@ public:
     void AddInputDevice(QString deviceName, int deviceNum);
     void GetCurrentInputDevice(QString& deviceName, int& deviceNum);
     void SetButtonState(SDL_GameControllerButton button, int state);
+    void SetMaxAxis(int16_t max);
+    void SetAxisState(SDL_GameControllerAxis axis, int16_t state);
+    void ClearAxisState();
     bool IsPluggedIn();
 
 private slots:
