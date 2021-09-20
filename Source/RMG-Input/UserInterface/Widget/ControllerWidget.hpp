@@ -23,37 +23,25 @@ class ControllerWidget : public QWidget, Ui::ControllerWidget
     Q_OBJECT
 
 private:
-    struct axis_t
-    {
-        SDL_GameControllerAxis axis;
-        int16_t state;
-
-        bool operator==(axis_t b)
-        {
-            return axis == b.axis && 
-                    state == b.state;
-        }
-    };
-
-    int16_t maxAxis;
     QList<QString> inputDeviceNameList;
     QPixmap controllerPixmap;
     QList<QString> controllerImages;
-    QList<axis_t> currentAxisList;
+    int16_t xAxisState = 0;
+    int16_t yAxisState = 0;
+    bool needsControllerImageDraw = false;
 
-    void drawControllerImage();
 public:
     ControllerWidget(QWidget* parent);
     ~ControllerWidget();
 
     void ClearInputDevices();
     void AddInputDevice(QString deviceName, int deviceNum);
+    void DrawControllerImage();
     void GetCurrentInputDevice(QString& deviceName, int& deviceNum);
     void SetButtonState(SDL_GameControllerButton button, int state);
-    void SetMaxAxis(int16_t max);
-    void SetAxisState(SDL_GameControllerAxis axis, int16_t state);
-    void ClearAxisState();
+    void SetAxisState(int16_t xState, int16_t yState);
     bool IsPluggedIn();
+
 
 private slots:
     void on_deadZoneSlider_valueChanged(int value);

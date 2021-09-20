@@ -16,12 +16,35 @@
 
 using namespace UserInterface;
 #include <iostream>
-QList<Widget::ControllerWidget*> controllerWidgets;
+
+MainDialog::MainDialog(QWidget* parent) : QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint)
+{
+    this->setupUi(this);
+    this->setWindowIcon(QIcon(":Resource/RMG.png"));
+
+    // each tab needs its own ControllerWidget
+    for (int i = 0; i < this->tabWidget->count(); i++)
+    {
+        Widget::ControllerWidget* widget = new Widget::ControllerWidget(this);
+        this->tabWidget->widget(i)->layout()->addWidget(widget);
+        controllerWidgets.push_back(widget);
+    }
+
+    this->searchForInputDevices();
+
+    this->inputPollTimer = new QTimer(this);
+    connect(this->inputPollTimer, &QTimer::timeout, this, &MainDialog::on_InputPollTimer_triggered);
+    this->inputPollTimer->start(50);
+}
+
+MainDialog::~MainDialog()
+{
+}
 
 void MainDialog::searchForInputDevices()
 {
     // always add keyboard device
-    for (auto& controllerWidget : controllerWidgets)
+    for (auto& controllerWidget : this->controllerWidgets)
     {
         controllerWidget->ClearInputDevices();
         controllerWidget->AddInputDevice("Keyboard", -1);
@@ -44,7 +67,6 @@ void MainDialog::searchForInputDevices()
             for (int y = 0; y < controllerWidgets.count(); y++)
             {
                 Widget::ControllerWidget* controllerWidget = controllerWidgets.at(y);
-                std::cout << "i:" << i << " controllername:" << name << std::endl;
                 controllerWidget->AddInputDevice(name, i);
             }
         }
@@ -128,39 +150,17 @@ SDL_GameController* MainDialog::openController(QString deviceName, int deviceNum
     return nullptr;
 }
 
-MainDialog::MainDialog(QWidget* parent) : QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint)
-{
-    this->setupUi(this);
-    this->setWindowIcon(QIcon(":Resource/RMG.png"));
-
-    // each tab needs its own ControllerWidget
-    for (int i = 0; i < this->tabWidget->count(); i++)
-    {
-        Widget::ControllerWidget* widget = new Widget::ControllerWidget(this);
-        this->tabWidget->widget(i)->layout()->addWidget(widget);
-        controllerWidgets.push_back(widget);
-    }
-
-    this->searchForInputDevices();
-
-    this->inputPollTimer = new QTimer(this);
-    connect(this->inputPollTimer, &QTimer::timeout, this, &MainDialog::on_InputPollTimer_triggered);
-    this->inputPollTimer->start(50);
-}
-
-MainDialog::~MainDialog()
-{
-}
-
 static QString currentDeviceName;
 static int currentDeviceNum;
 static SDL_GameController* currentController = nullptr;
 
 void MainDialog::on_InputPollTimer_triggered()
 {
-    Widget::ControllerWidget* controllerWidget = controllerWidgets.at(this->tabWidget->currentIndex());
+    Widget::ControllerWidget* controllerWidget;
     QString deviceName;
     int deviceNum;
+
+    controllerWidget = controllerWidgets.at(this->tabWidget->currentIndex());
 
     // if the current controller widget 
     // is disabled (by the user), 
@@ -238,17 +238,12 @@ void MainDialog::on_InputPollTimer_triggered()
         controllerWidget->SetButtonState(button, buttonState);
     }
 
-    SDL_GameControllerAxis axisList[] = {
-        SDL_CONTROLLER_AXIS_LEFTX,
-        SDL_CONTROLLER_AXIS_LEFTY
-    };
+    // update axis state
+    int16_t xAxisState = 0, yAxisState = 0;
+    xAxisState = SDL_GameControllerGetAxis(currentController, SDL_CONTROLLER_AXIS_LEFTX);
+    yAxisState = SDL_GameControllerGetAxis(currentController, SDL_CONTROLLER_AXIS_LEFTY);
+    controllerWidget->SetAxisState(xAxisState, yAxisState);
 
-    controllerWidget->ClearAxisState();
-    //controllerWidget->SetMaxAxis(SDL_GameControllerGetAxis(currentController, SDL_CONTROLLER_AXIS_MAX));
-    for (auto& axis : axisList)
-    {
-        int64_t axisState = SDL_GameControllerGetAxis(currentController, axis);
-        controllerWidget->SetAxisState(axis, axisState);
-        std::cout << "axis: " << axis << ", axisState: " << axisState << std::endl;
-    }
+    // re-draw controller image if needed
+    controllerWidget->DrawControllerImage();
 }

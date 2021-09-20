@@ -16,99 +16,27 @@
 #include <SDL.h>
 #include <qpixmap.h>
 
+#define SDL_AXIS_PEAK 32768
+
 using namespace UserInterface::Widget;
-
-struct tmp
-{
-    int a;
-    int b;
-};
-
-static QSize tmpSize;
 
 ControllerWidget::ControllerWidget(QWidget* parent) : QWidget(parent)
 {
 	this->setupUi(this);
 
-    int w = this->size().width();
-    int h = this->size().height();
-
-    tmpSize = this->size();
-
-    this->controllerPixmap = QIcon(":Resource/Controller_NoAnalogStick.svg").pixmap(QSize(w, h));
-
-    this->deadZoneSlider->setValue(25);
+    this->controllerPixmap = QIcon(":Resource/Controller_NoAnalogStick.svg").pixmap(this->size());
+    this->deadZoneSlider->setValue(10);
     this->analogStickRangeSlider->setValue(100);
     this->controllerPluggedCheckBox->setChecked(false);
 
-    this->drawControllerImage();
+    this->needsControllerImageDraw = true;
+    this->DrawControllerImage();
 }
 
 ControllerWidget::~ControllerWidget()
 {
 
 }
-#define AXIS_PEAK 32768
-#include <iostream>
-void ControllerWidget::drawControllerImage()
-{
-    QPixmap finalControllerPixmap = QPixmap(this->controllerPixmap);
-    QSize controllerPixmapSize = this->controllerPixmap.size();
-    QPainter painter(&finalControllerPixmap);
-    // paint all overlayImages on top of baseImage
-    for (auto& buttonImageUri : this->controllerImages)
-    {
-        QPixmap buttonImage = QIcon(buttonImageUri).pixmap(controllerPixmapSize);
-        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-        painter.drawPixmap(0, 0, buttonImage);
-    }
-    // render stick w/ offset
-    QPixmap stickImage = QIcon(":Resource/Controller_AnalogStick.svg").pixmap(controllerPixmapSize);
-    painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-
-    int offsetx = 0, offsety = 0;
-    int width = controllerPixmapSize.width();
-    int height = controllerPixmapSize.height();
-    // normal x=3093.517 y=3509.456
-    // bottom center x=3093.517 y=3915.018 (x%=0 y%=10.925)
-    // top center x=3093.517 y=3103.893 (x%=0 y%=12.265)
-    // right center x=3499.075 y=3509.456 (x%=12.3034 y%=0)
-    // left center x=2687.959 y=3509.456 (x%=12.3034, y%=0)
-
-    const int maxOffsety = (int)((double)(height * 0.12265f) / 2);
-    const int maxOffsetx = maxOffsety;
-    //const int maxOffsetx = (int)((double)(height * 0.123034f) / 2);
-
-    for (auto& axis : currentAxisList)
-    {
-        int percentage = (double)((float)axis.state / AXIS_PEAK * 100);
-
-        if (axis.axis == SDL_CONTROLLER_AXIS_LEFTX)
-        {
-            offsetx = ((float)maxOffsetx / 100 * percentage);
-        } else if (axis.axis == SDL_CONTROLLER_AXIS_LEFTY)
-        {
-            offsety = ((float)maxOffsety / 100 * percentage);
-        }
-    }
-
-
-    //offsety = (int)((double)(height * 0.123034f) / 2);
-    //offsetx = -(int)((double)(width * 0.123034f) / 2);
-
-    std::cout << "width: " << width << ", height: " << height << std::endl;
-    std::cout << "offsetx: " << offsetx << ", offsety: " << offsety << std::endl;
-    std::cout << offsety << std::endl;
-    //offsetx = 
-
-    painter.drawPixmap(offsetx, offsety, stickImage);
-
-    painter.end();
-
-    this->imageLabel->setPixmap(finalControllerPixmap);
-}
-
-#include <iostream>
 
 void ControllerWidget::ClearInputDevices()
 {
@@ -129,6 +57,70 @@ void ControllerWidget::AddInputDevice(QString deviceName, int deviceNum)
 
     this->inputDeviceNameList.append(deviceName);
     this->inputDeviceComboBox->addItem(name, deviceNum);
+}
+
+void ControllerWidget::DrawControllerImage()
+{
+    if (!this->needsControllerImageDraw)
+    {
+        return;
+    }
+    else
+    { // make sure we don't keep on drawing
+        this->needsControllerImageDraw = false;
+    }
+
+    QPixmap finalControllerPixmap = QPixmap(this->controllerPixmap);
+    QSize controllerPixmapSize = this->controllerPixmap.size();
+    QPainter painter(&finalControllerPixmap);
+    // paint all overlayImages on top of baseImage
+    for (auto& buttonImageUri : this->controllerImages)
+    {
+        QPixmap buttonImage = QIcon(buttonImageUri).pixmap(controllerPixmapSize);
+        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        painter.drawPixmap(0, 0, buttonImage);
+    }
+
+    // render stick with offset specified by controller axis
+    QPixmap stickImage = QIcon(":Resource/Controller_AnalogStick.svg").pixmap(controllerPixmapSize);
+    painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+
+    int offsetx = 0, offsety = 0;
+    static const int width = controllerPixmapSize.width();
+    static const int height = controllerPixmapSize.height();
+    // considering we're using a vector image,
+    // we'll move the analog stick by a percentage
+    // of the total width/height from the image
+    static const int maxOffsety = ((double)(height * 0.12265f) / 2);
+    static const int maxOffsetx = maxOffsety;
+    // calculate deadzone value based on user input
+    const int deadZoneValue = (SDL_AXIS_PEAK / 100 * deadZoneSlider->value());
+    // calculate offset percentages for the image
+    const int xOffsetPercentage = (double)((double)xAxisState / SDL_AXIS_PEAK * 100);
+    const int yOffsetPercentage = (double)((double)yAxisState / SDL_AXIS_PEAK * 100);
+
+    // make sure we respect the deadzone
+#if 0
+    if ((abs(xState) > deadZoneValue))
+    {
+        offsetx = ((float)maxOffsetx / 100 * xOffsetPercentage);
+    }
+    if ((abs(yState) > deadZoneValue))
+    {
+        offsety = ((float)maxOffsety / 100 * yOffsetPercentage);
+    }
+#else
+    if (sqrt(pow(xAxisState, 2) + pow(yAxisState, 2)) > deadZoneValue)
+    {
+        offsetx = ((float)maxOffsetx / 100 * xOffsetPercentage);
+        offsety = ((float)maxOffsety / 100 * yOffsetPercentage);
+    }
+#endif
+
+    painter.drawPixmap(offsetx, offsety, stickImage);
+    painter.end();
+
+    this->imageLabel->setPixmap(finalControllerPixmap);
 }
 
 void ControllerWidget::GetCurrentInputDevice(QString& deviceName, int& deviceNum)
@@ -199,10 +191,6 @@ void ControllerWidget::on_setupButton_clicked()
 {
 }
 
-QPixmap createImageWithOverlay(QPixmap& baseImage, QList<QPixmap> overlayImages);
-
-QList<QString> tmpList;
-
 struct
 {
     SDL_GameControllerButton button;
@@ -227,8 +215,6 @@ struct
 
 void ControllerWidget::SetButtonState(SDL_GameControllerButton button, int state)
 {
-    bool needsDraw = false;
-
     for (auto& keybinding : keybindings2)
     {
         if (keybinding.button == button)
@@ -236,37 +222,25 @@ void ControllerWidget::SetButtonState(SDL_GameControllerButton button, int state
             if (state && !controllerImages.contains(keybinding.icon))
             {
                 controllerImages.append(keybinding.icon);
-                needsDraw = true;
+                this->needsControllerImageDraw = true;
             } else if (!state && controllerImages.contains(keybinding.icon))
             {
                 controllerImages.removeOne(keybinding.icon);
-                needsDraw = true;
+                this->needsControllerImageDraw = true;
             }
         }
     }
+}
 
-    if (needsDraw) {
-        this->drawControllerImage();
+void ControllerWidget::SetAxisState(int16_t xState, int16_t yState)
+{
+    if (this->xAxisState != xState ||
+        this->yAxisState != yState)
+    {
+        this->needsControllerImageDraw = true;
+        this->xAxisState = xState;
+        this->yAxisState = yState;
     }
-}
-
-void ControllerWidget::SetAxisState(SDL_GameControllerAxis axis, int16_t state)
-{
-    axis_t axisType = {axis, state};
-
-    currentAxisList.append(axisType);
-
-    this->drawControllerImage();
-}
-
-void ControllerWidget::SetMaxAxis(int16_t max)
-{
-    this->maxAxis = max;
-}
-
-void ControllerWidget::ClearAxisState()
-{
-    currentAxisList.clear();
 }
 
 bool ControllerWidget::IsPluggedIn()

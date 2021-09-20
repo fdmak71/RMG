@@ -22,6 +22,7 @@ class MainDialog : public QDialog, private Ui::MainDialog
 Q_OBJECT
 private:
    QTimer* inputPollTimer;
+   QList<Widget::ControllerWidget*> controllerWidgets;
 
    void searchForInputDevices();
    SDL_GameController* openController(QString deviceName, int deviceNum);
