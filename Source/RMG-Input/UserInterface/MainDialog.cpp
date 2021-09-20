@@ -164,7 +164,6 @@ void MainDialog::on_InputPollTimer_triggered()
         currentController = nullptr;
         // search for controllers again
         this->searchForInputDevices();
-        return;
     }
 
     SDL_GameControllerButton buttons[] = {
@@ -183,14 +182,21 @@ void MainDialog::on_InputPollTimer_triggered()
 
     for (auto& button : buttons)
     {
-        int buttonState = SDL_GameControllerGetButton(currentController, button);
+        int buttonState = 0;
+        if (currentController != nullptr)
+        {
+            buttonState = SDL_GameControllerGetButton(currentController, button);
+        }
         controllerWidget->SetButtonState(button, buttonState);
     }
 
     // update axis state
     int16_t xAxisState = 0, yAxisState = 0;
-    xAxisState = SDL_GameControllerGetAxis(currentController, SDL_CONTROLLER_AXIS_LEFTX);
-    yAxisState = SDL_GameControllerGetAxis(currentController, SDL_CONTROLLER_AXIS_LEFTY);
+    if (currentController != nullptr)
+    {
+        xAxisState = SDL_GameControllerGetAxis(currentController, SDL_CONTROLLER_AXIS_LEFTX);
+        yAxisState = SDL_GameControllerGetAxis(currentController, SDL_CONTROLLER_AXIS_LEFTY);
+    }
     controllerWidget->SetAxisState(xAxisState, yAxisState);
 
     // re-draw controller image if needed
