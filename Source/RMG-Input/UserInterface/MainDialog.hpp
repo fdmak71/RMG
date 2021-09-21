@@ -22,6 +22,7 @@ class MainDialog : public QDialog, private Ui::MainDialog
 Q_OBJECT
 private:
    QTimer* inputPollTimer;
+   QTimer* inputDevicePollTimer;
    QList<Widget::ControllerWidget*> controllerWidgets;
    SDL_GameController* currentController = nullptr;
    QString currentDeviceName;
@@ -38,6 +39,8 @@ public:
 
 public slots:
    void on_InputPollTimer_triggered();
+   void on_InputDevicePollTimer_triggered();
+
    void on_ControllerWidget_CurrentInputDeviceChanged(QString deviceName, int deviceNum);
    void on_tabWidget_currentChanged(int index);
 };

@@ -40,6 +40,10 @@ MainDialog::MainDialog(QWidget* parent) : QDialog(parent, Qt::WindowSystemMenuHi
     this->inputPollTimer = new QTimer(this);
     connect(this->inputPollTimer, &QTimer::timeout, this, &MainDialog::on_InputPollTimer_triggered);
     this->inputPollTimer->start(50);
+
+    this->inputDevicePollTimer = new QTimer(this);
+    connect(this->inputDevicePollTimer, &QTimer::timeout, this, &MainDialog::on_InputDevicePollTimer_triggered);
+    this->inputDevicePollTimer->start(5000);
 }
 
 MainDialog::~MainDialog()
@@ -108,6 +112,7 @@ void MainDialog::addController(int deviceNum)
     }
 }
 
+#include <iostream>
 void MainDialog::on_InputPollTimer_triggered()
 {
     Widget::ControllerWidget* controllerWidget;
@@ -139,13 +144,18 @@ void MainDialog::on_InputPollTimer_triggered()
                 controllerWidget->SetAxisState((SDL_GameControllerAxis)event.caxis.axis, event.caxis.value);
                 break;
 
-            case SDL_CONTROLLERDEVICEREMOVED:
-                this->removeCurrentController();
-                break;
+            /*case SDL_CONTROLLERDEVICEREMOVED:
+            {
+                int instanceId = event.cdevice.which;
+                SDL_GameController* controller = SDL_GameControllerFromInstanceID(instanceId);
+
+                std::cout << "removed: " << SDL_GameControllerName(controller) << std::endl;
+                //this->removeCurrentController();
+            }    break;
 
             case SDL_CONTROLLERDEVICEADDED:
                 this->addController(event.cdevice.which);
-                break;
+                break;*/
 
             default:
                 break;
@@ -153,6 +163,80 @@ void MainDialog::on_InputPollTimer_triggered()
     }
 
     controllerWidget->DrawControllerImage();
+}
+
+#include <QList>
+void MainDialog::on_InputDevicePollTimer_triggered()
+{
+    struct inputDevice_t
+    {
+        int deviceNum;
+        QString deviceName;
+
+        bool operator== (inputDevice_t other)
+        {
+            return other.deviceNum == deviceNum &&
+                other.deviceName == deviceName;
+        }
+    };
+
+    static QList<inputDevice_t> oldDeviceList;
+    QList<inputDevice_t> newDeviceList;
+
+    QList<inputDevice_t> devicesToBeAdded;
+    QList<inputDevice_t> devicesToBeRemoved;
+
+    // fill newDeviceList
+    for (int i = 0; i < SDL_NumJoysticks(); i++)
+    {
+        const char* name = nullptr;
+
+        // skip non-gamecontrollers
+        if (!SDL_IsGameController(i))
+        {
+            continue;
+        }
+        
+        name = SDL_GameControllerNameForIndex(i);
+        if (name != nullptr)
+        {
+            inputDevice_t inputDevice = {i, QString(name)};
+            newDeviceList.append(inputDevice);
+        }
+    }
+
+    // compare newDeviceList with oldDeviceList
+    for (int i = 0; i < newDeviceList.count(); i++)
+    {
+        auto inputDevice = newDeviceList.at(i);
+        if (!oldDeviceList.contains(inputDevice))
+        {
+            devicesToBeAdded.append(inputDevice);
+        }
+    }
+    for (int i = 0; i< oldDeviceList.count(); i++)
+    {
+        auto inputDevice = oldDeviceList.at(i);
+        if (!newDeviceList.contains(inputDevice))
+        {
+            devicesToBeRemoved.append(inputDevice);
+        }
+    }
+
+    // apply changes
+    for (auto& controllerWidget : this->controllerWidgets)
+    {
+        for (auto& inputDevice : devicesToBeAdded) 
+        {
+            controllerWidget->AddInputDevice(inputDevice.deviceName, inputDevice.deviceNum);
+        }
+        for (auto& inputDevice : devicesToBeRemoved)
+        {
+            controllerWidget->RemoveInputDevice(inputDevice.deviceName, inputDevice.deviceNum);
+        }
+    }
+
+    oldDeviceList = newDeviceList;
 }
 
 void MainDialog::on_ControllerWidget_CurrentInputDeviceChanged(QString deviceName, int deviceNum)
