@@ -27,9 +27,15 @@ MainDialog::MainDialog(QWidget* parent) : QDialog(parent, Qt::WindowSystemMenuHi
         Widget::ControllerWidget* widget = new Widget::ControllerWidget(this);
         this->tabWidget->widget(i)->layout()->addWidget(widget);
         controllerWidgets.push_back(widget);
+        connect(widget, &Widget::ControllerWidget::CurrentInputDeviceChanged, this,
+            &MainDialog::on_ControllerWidget_CurrentInputDeviceChanged);
     }
 
-    this->searchForInputDevices();
+    // always add keyboard device
+    for (auto& controllerWidget : this->controllerWidgets)
+    {
+        controllerWidget->AddInputDevice("Keyboard", -1);
+    }
 
     this->inputPollTimer = new QTimer(this);
     connect(this->inputPollTimer, &QTimer::timeout, this, &MainDialog::on_InputPollTimer_triggered);
@@ -40,40 +46,16 @@ MainDialog::~MainDialog()
 {
 }
 
-void MainDialog::searchForInputDevices()
+void MainDialog::openController(QString deviceName, int deviceNum)
 {
-    // always add keyboard device
-    for (auto& controllerWidget : this->controllerWidgets)
+    // we don't need to open a keyboard
+    if (deviceNum == -1)
     {
-        controllerWidget->ClearInputDevices();
-        controllerWidget->AddInputDevice("Keyboard", -1);
+        currentDeviceName = "";
+        currentDeviceNum = -1;
+        return;
     }
 
-    // check if there are any game controllers
-    for (int i = 0; i < SDL_NumJoysticks(); i++)
-    {
-        const char* name = nullptr;
-
-        // skip non-gamecontrollers
-        if (!SDL_IsGameController(i))
-        {
-            continue;
-        }
-        
-        name = SDL_GameControllerNameForIndex(i);
-        if (name != nullptr)
-        {
-            for (int y = 0; y < controllerWidgets.count(); y++)
-            {
-                Widget::ControllerWidget* controllerWidget = controllerWidgets.at(y);
-                controllerWidget->AddInputDevice(name, i);
-            }
-        }
-    }
-}
-
-SDL_GameController* MainDialog::openController(QString deviceName, int deviceNum)
-{
     // find each controller    
     for (int i = 0; i < SDL_NumJoysticks(); i++)
     {
@@ -91,17 +73,40 @@ SDL_GameController* MainDialog::openController(QString deviceName, int deviceNum
             if (deviceName == QString(name) &&
                 deviceNum == i)
             {
-                return SDL_GameControllerOpen(i);
+                currentController = SDL_GameControllerOpen(i);
+                currentDeviceNum = deviceNum;
+                currentDeviceName = deviceName;
+                return;
             }
         }
     }
-
-    return nullptr;
 }
 
-static QString currentDeviceName;
-static int currentDeviceNum;
-static SDL_GameController* currentController = nullptr;
+void MainDialog::closeController()
+{
+    if (this->currentController != nullptr)
+    {
+        SDL_GameControllerClose(this->currentController);
+        this->currentController = nullptr;
+    }
+}
+
+void MainDialog::removeCurrentController()
+{
+    for (auto& controllerWidget : this->controllerWidgets)
+    {
+        controllerWidget->RemoveInputDevice(currentDeviceName, currentDeviceNum);
+    }
+}
+
+void MainDialog::addController(int deviceNum)
+{
+    QString deviceName = SDL_GameControllerNameForIndex(deviceNum);
+    for (auto& controllerWidget : this->controllerWidgets)
+    {
+        controllerWidget->AddInputDevice(deviceName, deviceNum);
+    }
+}
 
 void MainDialog::on_InputPollTimer_triggered()
 {
@@ -111,7 +116,7 @@ void MainDialog::on_InputPollTimer_triggered()
 
     controllerWidget = controllerWidgets.at(this->tabWidget->currentIndex());
 
-    // if the current controller widget 
+    // if the current controller widget
     // is disabled (by the user), 
     // we don't need to do anything
     if (!controllerWidget->IsPluggedIn())
@@ -119,86 +124,57 @@ void MainDialog::on_InputPollTimer_triggered()
         return;
     }
 
-    // update controller state
-    SDL_GameControllerUpdate();
-
-    // query currently selected input device
-    controllerWidget->GetCurrentInputDevice(deviceName, deviceNum);
-    if (currentDeviceNum != deviceNum ||
-        currentDeviceName != deviceName)
+    // process SDL events
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
     {
-        // close previous controller
-        // if it exists
-        if (currentController != nullptr)
+        switch (event.type)
         {
-            SDL_GameControllerClose(currentController);
-        }
+            case SDL_CONTROLLERBUTTONDOWN:
+            case SDL_CONTROLLERBUTTONUP:
+                controllerWidget->SetButtonState((SDL_GameControllerButton)event.cbutton.button, event.cbutton.state);
+                break;
 
-        currentDeviceNum = deviceNum;
-        currentDeviceName = deviceName;
-        currentController = openController(deviceName, deviceNum);
-    }
+            case SDL_CONTROLLERAXISMOTION:
+                controllerWidget->SetAxisState((SDL_GameControllerAxis)event.caxis.axis, event.caxis.value);
+                break;
 
-    // we don't need to poll a controller
-    // when the user has keyboard selected
-    if (currentDeviceNum == -1)
-    {
-        return;
-    }
+            case SDL_CONTROLLERDEVICEREMOVED:
+                this->removeCurrentController();
+                break;
 
-    // if we didn't open a controller yet (or failed to do so),
-    // try to open the controller again
-    if (currentController == nullptr)
-    {
-        currentController = openController(deviceName, deviceNum);
-        if (currentController == nullptr)
-        { // return when we've failed again
-            return;
+            case SDL_CONTROLLERDEVICEADDED:
+                this->addController(event.cdevice.which);
+                break;
+
+            default:
+                break;
         }
     }
 
-    // make sure controller is still attached
-    if (!SDL_GameControllerGetAttached(currentController))
-    {
-        SDL_GameControllerClose(currentController);
-        currentController = nullptr;
-        // search for controllers again
-        this->searchForInputDevices();
-    }
-
-    SDL_GameControllerButton buttons[] = {
-        SDL_CONTROLLER_BUTTON_A,
-        SDL_CONTROLLER_BUTTON_B,
-        SDL_CONTROLLER_BUTTON_X,
-        SDL_CONTROLLER_BUTTON_Y,
-        SDL_CONTROLLER_BUTTON_DPAD_DOWN,
-        SDL_CONTROLLER_BUTTON_DPAD_LEFT,
-        SDL_CONTROLLER_BUTTON_DPAD_RIGHT,
-        SDL_CONTROLLER_BUTTON_DPAD_UP,
-        SDL_CONTROLLER_BUTTON_START,
-        SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
-        SDL_CONTROLLER_BUTTON_RIGHTSHOULDER
-    };
-
-    for (auto& button : buttons)
-    {
-        int buttonState = 0;
-        if (currentController != nullptr)
-        {
-            buttonState = SDL_GameControllerGetButton(currentController, button);
-        }
-        controllerWidget->SetButtonState(button, buttonState);
-    }
-
-    // update axis state
-    int16_t xAxisState = 0, yAxisState = 0;
-    if (currentController != nullptr)
-    {
-        xAxisState = SDL_GameControllerGetAxis(currentController, SDL_CONTROLLER_AXIS_LEFTX);
-        yAxisState = SDL_GameControllerGetAxis(currentController, SDL_CONTROLLER_AXIS_LEFTY);
-    }
-    controllerWidget->SetAxisState(xAxisState, yAxisState);
-
-    // re-draw controller image if needed
     controllerWidget->DrawControllerImage();
+}
+
+void MainDialog::on_ControllerWidget_CurrentInputDeviceChanged(QString deviceName, int deviceNum)
+{
+    std::cout << "on_ControllerWidget_CurrentInputDeviceChanged" << std::endl;
+
+    this->closeController();
+    this->openController(deviceName, deviceNum);
+}
+
+
+void MainDialog::on_tabWidget_currentChanged(int index)
+{
+    QString deviceName;
+    int deviceNum = 0;
+
+    Widget::ControllerWidget* controllerWidget = controllerWidgets.at(index);
+    controllerWidget->ClearControllerImage();
+
+    this->closeController();
+
+    controllerWidget->GetCurrentInputDevice(deviceName, deviceNum);
+
+    this->openController(deviceName, deviceNum);
 }

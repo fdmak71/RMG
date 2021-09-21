@@ -36,12 +36,6 @@ ControllerWidget::~ControllerWidget()
 
 }
 
-void ControllerWidget::ClearInputDevices()
-{
-    this->inputDeviceNameList.clear();
-    this->inputDeviceComboBox->clear();
-}
-
 void ControllerWidget::AddInputDevice(QString deviceName, int deviceNum)
 {
     QString name = deviceName;
@@ -55,6 +49,23 @@ void ControllerWidget::AddInputDevice(QString deviceName, int deviceNum)
 
     this->inputDeviceNameList.append(deviceName);
     this->inputDeviceComboBox->addItem(name, deviceNum);
+}
+
+void ControllerWidget::RemoveInputDevice(QString deviceName, int deviceNum)
+{
+    inputDeviceNameList.removeOne(deviceName);
+
+    for (int i = 0; i < this->inputDeviceComboBox->count(); i++)
+    {
+        int tmpNum = this->inputDeviceComboBox->itemData(i).toInt();
+        QString tmpName = this->inputDeviceComboBox->itemText(i);
+
+        if (tmpName.contains(deviceName) && deviceNum == tmpNum)
+        {
+            this->inputDeviceComboBox->removeItem(i);
+            break;
+        }
+    }
 }
 
 void ControllerWidget::DrawControllerImage()
@@ -121,6 +132,14 @@ void ControllerWidget::DrawControllerImage()
     this->imageLabel->setPixmap(finalControllerPixmap);
 }
 
+void ControllerWidget::ClearControllerImage()
+{
+    this->controllerImages.clear();
+    this->xAxisState = this->yAxisState = 0;
+    this->needsControllerImageDraw = true;
+    this->DrawControllerImage();
+}
+
 void ControllerWidget::GetCurrentInputDevice(QString& deviceName, int& deviceNum)
 {
     int currentIndex = this->inputDeviceComboBox->currentIndex();
@@ -142,6 +161,17 @@ void ControllerWidget::on_analogStickRangeSlider_valueChanged(int value)
     QString text = QString::number(value);
     text += "%";
     this->analogStickRangeLabel->setText(text);
+}
+
+#include <iostream>
+void ControllerWidget::on_inputDeviceComboBox_currentIndexChanged(int value)
+{
+    QString deviceName = this->inputDeviceNameList[value];
+    int deviceNum = this->inputDeviceComboBox->itemData(value).toInt();
+
+    this->ClearControllerImage();
+
+    emit this->CurrentInputDeviceChanged(deviceName, deviceNum);
 }
 
 void ControllerWidget::on_controllerPluggedCheckBox_toggled(bool value)
@@ -182,6 +212,8 @@ void ControllerWidget::on_controllerPluggedCheckBox_toggled(bool value)
     {
         widget->setEnabled(value);
     }
+
+    this->ClearControllerImage();
 }
 
 
@@ -230,14 +262,20 @@ void ControllerWidget::SetButtonState(SDL_GameControllerButton button, int state
     }
 }
 
-void ControllerWidget::SetAxisState(int16_t xState, int16_t yState)
+void ControllerWidget::SetAxisState(SDL_GameControllerAxis axis, int16_t state)
 {
-    if (this->xAxisState != xState ||
-        this->yAxisState != yState)
+    switch (axis)
     {
-        this->needsControllerImageDraw = true;
-        this->xAxisState = xState;
-        this->yAxisState = yState;
+        case SDL_CONTROLLER_AXIS_LEFTX:
+            needsControllerImageDraw = true;
+            xAxisState = state;
+            break;
+        case SDL_CONTROLLER_AXIS_LEFTY:
+            needsControllerImageDraw = true;
+            yAxisState = state;
+            break;
+        default:
+            break;
     }
 }
 

@@ -34,21 +34,26 @@ public:
     ControllerWidget(QWidget* parent);
     ~ControllerWidget();
 
-    void ClearInputDevices();
     void AddInputDevice(QString deviceName, int deviceNum);
+    void RemoveInputDevice(QString deviceName, int deviceNum);
+
     void DrawControllerImage();
+    void ClearControllerImage();
+
     void GetCurrentInputDevice(QString& deviceName, int& deviceNum);
     void SetButtonState(SDL_GameControllerButton button, int state);
-    void SetAxisState(int16_t xState, int16_t yState);
+    void SetAxisState(SDL_GameControllerAxis axis, int16_t state);
     bool IsPluggedIn();
-
 
 private slots:
     void on_deadZoneSlider_valueChanged(int value);
     void on_analogStickRangeSlider_valueChanged(int value);
+    void on_inputDeviceComboBox_currentIndexChanged(int value);
 
     void on_controllerPluggedCheckBox_toggled(bool value);
     void on_setupButton_clicked();
+signals:
+    void CurrentInputDeviceChanged(QString deviceName, int deviceNum);
 };
 }
 }
