@@ -33,7 +33,7 @@
        <property name="title">
         <string>Input Device</string>
        </property>
-       <layout class="QVBoxLayout" name="verticalLayout_4">
+       <layout class="QHBoxLayout" name="horizontalLayout_10">
         <item>
          <widget class="QComboBox" name="inputDeviceComboBox">
           <property name="sizePolicy">
@@ -41,6 +41,13 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="inputDeviceRefreshButton">
+          <property name="text">
+           <string>Refresh</string>
           </property>
          </widget>
         </item>
@@ -139,15 +146,27 @@
            <layout class="QHBoxLayout" name="horizontalLayout_19">
             <item>
              <widget class="QLabel" name="label_19">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
                <string>Up:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="dpadUpButton">
+             <widget class="CustomButton" name="dpadUpButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>PushButton</string>
+               <string> </string>
               </property>
              </widget>
             </item>
@@ -157,15 +176,27 @@
            <layout class="QHBoxLayout" name="horizontalLayout_20">
             <item>
              <widget class="QLabel" name="label_20">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
                <string>Down:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="dpadDownButton">
+             <widget class="CustomButton" name="dpadDownButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>PushButton</string>
+               <string> </string>
               </property>
              </widget>
             </item>
@@ -175,15 +206,27 @@
            <layout class="QHBoxLayout" name="horizontalLayout_21">
             <item>
              <widget class="QLabel" name="label_21">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
                <string>left:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="dpadLeftButton">
+             <widget class="CustomButton" name="dpadLeftButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>PushButton</string>
+               <string> </string>
               </property>
              </widget>
             </item>
@@ -193,15 +236,27 @@
            <layout class="QHBoxLayout" name="horizontalLayout_22">
             <item>
              <widget class="QLabel" name="label_22">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
                <string>Right:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="dpadRightButton">
+             <widget class="CustomButton" name="dpadRightButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>PushButton</string>
+               <string> </string>
               </property>
              </widget>
             </item>
@@ -238,9 +293,9 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="analogStickUpButton">
+             <widget class="CustomButton" name="analogStickUpButton">
               <property name="text">
-               <string>PushButton</string>
+               <string> </string>
               </property>
              </widget>
             </item>
@@ -256,9 +311,9 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="analogStickDownButton">
+             <widget class="CustomButton" name="analogStickDownButton">
               <property name="text">
-               <string>PushButton</string>
+               <string> </string>
               </property>
              </widget>
             </item>
@@ -274,9 +329,9 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="analogStickLeftButton">
+             <widget class="CustomButton" name="analogStickLeftButton">
               <property name="text">
-               <string>PushButton</string>
+               <string> </string>
               </property>
              </widget>
             </item>
@@ -292,9 +347,9 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="analogStickRightButton">
+             <widget class="CustomButton" name="analogStickRightButton">
               <property name="text">
-               <string>PushButton</string>
+               <string> </string>
               </property>
              </widget>
             </item>
@@ -311,6 +366,12 @@
             </item>
             <item>
              <widget class="QSlider" name="analogStickRangeSlider">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimum">
                <number>1</number>
               </property>
@@ -379,9 +440,9 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="leftTriggerButton">
+            <widget class="CustomButton" name="leftTriggerButton">
              <property name="text">
-              <string>PushButton</string>
+              <string> </string>
              </property>
             </widget>
            </item>
@@ -410,9 +471,9 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="rightTriggerButton">
+            <widget class="CustomButton" name="rightTriggerButton">
              <property name="text">
-              <string>PushButton</string>
+              <string> </string>
              </property>
             </widget>
            </item>
@@ -503,9 +564,9 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="startButton">
+            <widget class="CustomButton" name="startButton">
              <property name="text">
-              <string>PushButton</string>
+              <string> </string>
              </property>
             </widget>
            </item>
@@ -535,9 +596,9 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="zTriggerButton">
+              <widget class="CustomButton" name="zTriggerButton">
                <property name="text">
-                <string>PushButton</string>
+                <string> </string>
                </property>
               </widget>
              </item>
@@ -593,15 +654,27 @@
            <layout class="QHBoxLayout" name="horizontalLayout_28">
             <item>
              <widget class="QLabel" name="label_28">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
                <string>Up:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="cbuttonUpButton">
+             <widget class="CustomButton" name="cbuttonUpButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>PushButton</string>
+               <string> </string>
               </property>
              </widget>
             </item>
@@ -611,15 +684,27 @@
            <layout class="QHBoxLayout" name="horizontalLayout_27">
             <item>
              <widget class="QLabel" name="label_27">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
                <string>Down:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="cbuttonDownButton">
+             <widget class="CustomButton" name="cbuttonDownButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>PushButton</string>
+               <string> </string>
               </property>
              </widget>
             </item>
@@ -629,15 +714,27 @@
            <layout class="QHBoxLayout" name="horizontalLayout_29">
             <item>
              <widget class="QLabel" name="label_29">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
                <string>Left:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="cbuttonLeftButton">
+             <widget class="CustomButton" name="cbuttonLeftButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>PushButton</string>
+               <string> </string>
               </property>
              </widget>
             </item>
@@ -647,15 +744,27 @@
            <layout class="QHBoxLayout" name="horizontalLayout_30">
             <item>
              <widget class="QLabel" name="label_30">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
                <string>Right:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="cbuttonRightButton">
+             <widget class="CustomButton" name="cbuttonRightButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>PushButton</string>
+               <string> </string>
               </property>
              </widget>
             </item>
@@ -663,6 +772,19 @@
           </item>
          </layout>
         </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_9">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox_6">
@@ -674,15 +796,27 @@
            <layout class="QHBoxLayout" name="horizontalLayout_16">
             <item>
              <widget class="QLabel" name="label_16">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
                <string>B:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="bButton">
+             <widget class="CustomButton" name="bButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>PushButton</string>
+               <string> </string>
               </property>
              </widget>
             </item>
@@ -692,15 +826,27 @@
            <layout class="QHBoxLayout" name="horizontalLayout_17">
             <item>
              <widget class="QLabel" name="label_17">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
                <string>A:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="aButton">
+             <widget class="CustomButton" name="aButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>PushButton</string>
+               <string> </string>
               </property>
              </widget>
             </item>
@@ -755,6 +901,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CustomButton</class>
+   <extends>QPushButton</extends>
+   <header>UserInterface/Widget/CustomButton.hpp</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

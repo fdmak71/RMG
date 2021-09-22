@@ -8,6 +8,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "ControllerWidget.hpp"
+#include "SDL_gamecontroller.h"
 
 #include <QPixmap>
 #include <QResizeEvent>
@@ -29,11 +30,49 @@ ControllerWidget::ControllerWidget(QWidget* parent) : QWidget(parent)
 
     this->needsControllerImageDraw = true;
     this->DrawControllerImage();
+
+    this->initializeButtons();
 }
 
 ControllerWidget::~ControllerWidget()
 {
 
+}
+
+void ControllerWidget::initializeButtons()
+{
+    CustomButton* buttonList[] =
+    {
+        // dpad
+        this->dpadUpButton,
+        this->dpadDownButton,
+        this->dpadLeftButton,
+        this->dpadRightButton,
+        // analog stick
+        this->analogStickUpButton,
+        this->analogStickDownButton,
+        this->analogStickLeftButton,
+        this->analogStickRightButton,
+        // cbuttons
+        this->cbuttonUpButton,
+        this->cbuttonDownButton,
+        this->cbuttonLeftButton,
+        this->cbuttonRightButton,
+        // triggers
+        this->leftTriggerButton,
+        this->rightTriggerButton,
+        this->zTriggerButton,
+        // buttons
+        this->aButton,
+        this->bButton,
+        this->startButton,
+    };
+
+    for (auto& button : buttonList)
+    {
+        button->Initialize(this);
+        button->setText(" ");
+    }
 }
 
 void ControllerWidget::AddInputDevice(QString deviceName, int deviceNum)
@@ -154,6 +193,11 @@ void ControllerWidget::on_deadZoneSlider_valueChanged(int value)
     title += "%";
 
     this->deadZoneGroupBox->setTitle(title);
+
+    // force re-draw controller image
+    // TODO: optimize this
+    this->needsControllerImageDraw = true;
+    this->DrawControllerImage();
 }
 
 void ControllerWidget::on_analogStickRangeSlider_valueChanged(int value)
@@ -163,7 +207,6 @@ void ControllerWidget::on_analogStickRangeSlider_valueChanged(int value)
     this->analogStickRangeLabel->setText(text);
 }
 
-#include <iostream>
 void ControllerWidget::on_inputDeviceComboBox_currentIndexChanged(int value)
 {
     QString deviceName = this->inputDeviceNameList[value];
@@ -174,9 +217,15 @@ void ControllerWidget::on_inputDeviceComboBox_currentIndexChanged(int value)
     emit this->CurrentInputDeviceChanged(deviceName, deviceNum);
 }
 
+void ControllerWidget::on_inputDeviceRefreshButton_clicked()
+{
+    emit this->RefreshInputDevicesButtonClicked();
+}
+
 void ControllerWidget::on_controllerPluggedCheckBox_toggled(bool value)
 {
-    QWidget* widgetList[] = {
+    QWidget* widgetList[] =
+    {
         // dpad
         this->dpadUpButton,
         this->dpadDownButton,
@@ -205,7 +254,8 @@ void ControllerWidget::on_controllerPluggedCheckBox_toggled(bool value)
         this->deadZoneSlider,
         this->setupButton,
         this->pushButton_16,
-        this->inputDeviceComboBox
+        this->inputDeviceComboBox,
+        this->inputDeviceRefreshButton
     };
 
     for (auto& widget : widgetList)
@@ -216,9 +266,60 @@ void ControllerWidget::on_controllerPluggedCheckBox_toggled(bool value)
     this->ClearControllerImage();
 }
 
+static CustomButton* currentButton = nullptr;
 
 void ControllerWidget::on_setupButton_clicked()
 {
+    CustomButton* buttonList[] =
+    {
+        this->startButton,
+    };
+
+    for (auto& button : buttonList)
+    {
+        button->activateWindow();
+        button->click();
+    }
+}
+
+#include <iostream>
+
+void ControllerWidget::on_CustomButton_released(CustomButton* button)
+{
+    if (currentButton != nullptr)
+    {
+        currentButton->StopTimer();
+        currentButton->setText(" ");
+    }
+
+    std::cout << "on_CustomButton_released" << std::endl;
+    currentButton = button;
+    button->StartTimer();
+}
+
+void ControllerWidget::on_CustomButton_TimerFinished(CustomButton* button)
+{
+    std::cout << "on_CustomButton_TimerFinished" << std::endl;
+
+    if (currentButton == button)
+    {
+        currentButton = nullptr;
+    }
+
+    QString text = " ";
+
+    SDL_GameControllerButton buttonNum = (SDL_GameControllerButton)button->GetButton();
+    if ((int)buttonNum != -1)
+    {
+        text = SDL_GameControllerGetStringForButton(buttonNum);
+    }
+
+    button->setText(text);
+}
+
+void ControllerWidget::on_CustomButton_TimerStopped(CustomButton* button)
+{
+   
 }
 
 struct
@@ -245,10 +346,46 @@ struct
 
 void ControllerWidget::SetButtonState(SDL_GameControllerButton button, int state)
 {
-    for (auto& keybinding : keybindings2)
+    if (currentButton != nullptr)
     {
-        if (keybinding.button == button)
+        if (state)
         {
+            std::cout << "currentButton != nullptr" << std::endl;
+            currentButton->StopTimer();
+            currentButton->SetButton(button);
+            currentButton->setText(SDL_GameControllerGetStringForButton(button));
+            currentButton = nullptr;
+        }
+        return;
+    }
+
+    struct
+    {
+        enum N64CONTROLLER_STATE n64button;
+        CustomButton* customButton;
+        QString icon;
+    } keybindings[] =
+    {
+        { N64CONTROLLER_BUTTON_A, this->aButton, ":Resource/Controller_Pressed_A.svg"},
+        { N64CONTROLLER_BUTTON_B, this->bButton, ":Resource/Controller_Pressed_B.svg" },
+        { N64CONTROLLER_BUTTON_START, this->startButton, ":Resource/Controller_Pressed_Start.svg"},
+        { N64CONTROLLER_BUTTON_DPAD_UP, this->dpadUpButton, ":Resource/Controller_Pressed_DpadUp.svg" },
+        { N64CONTROLLER_BUTTON_DPAD_DOWN, this->dpadDownButton, ":Resource/Controller_Pressed_DpadDown.svg" },
+        { N64CONTROLLER_BUTTON_DPAD_LEFT, this->dpadLeftButton, ":Resource/Controller_Pressed_DpadLeft.svg" },
+        { N64CONTROLLER_BUTTON_DPAD_RIGHT, this->dpadRightButton, ":Resource/Controller_Pressed_DpadRight.svg" },
+        { N64CONTROLLER_BUTTON_CBUTTONS_UP, this->cbuttonUpButton, ":Resource/Controller_Pressed_CButtonUp.svg" },
+        { N64CONTROLLER_BUTTON_CBUTTONS_DOWN, this->cbuttonDownButton, ":Resource/Controller_Pressed_CButtonDown.svg" },
+        { N64CONTROLLER_BUTTON_CBUTTONS_LEFT, this->cbuttonLeftButton, ":Resource/Controller_Pressed_CButtonLeft.svg" },
+        { N64CONTROLLER_BUTTON_CBUTTONS_RIGHT, this->cbuttonRightButton, ":Resource/Controller_Pressed_CButtonRight.svg" },
+        { N64CONTROLLER_BUTTON_LEFTTRIGGER, this->leftTriggerButton, ":Resource/Controller_Pressed_LeftTrigger.svg" },
+        { N64CONTROLLER_BUTTON_RIGHTTRIGGER, this->rightTriggerButton, ":Resource/Controller_Pressed_RightTrigger.svg" },
+    };
+
+    for (auto& keybinding : keybindings)
+    {
+        if (keybinding.customButton->GetButton() == button)
+        {
+            this->controllerState[keybinding.n64button] = state;
             if (state && !controllerImages.contains(keybinding.icon))
             {
                 controllerImages.append(keybinding.icon);

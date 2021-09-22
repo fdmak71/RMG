@@ -29,6 +29,8 @@ MainDialog::MainDialog(QWidget* parent) : QDialog(parent, Qt::WindowSystemMenuHi
         controllerWidgets.push_back(widget);
         connect(widget, &Widget::ControllerWidget::CurrentInputDeviceChanged, this,
             &MainDialog::on_ControllerWidget_CurrentInputDeviceChanged);
+        connect(widget, &Widget::ControllerWidget::RefreshInputDevicesButtonClicked, this,
+            &MainDialog::on_ControllerWidget_RefreshInputDevicesButtonClicked);
     }
 
     // always add keyboard device
@@ -37,17 +39,32 @@ MainDialog::MainDialog(QWidget* parent) : QDialog(parent, Qt::WindowSystemMenuHi
         controllerWidget->AddInputDevice("Keyboard", -1);
     }
 
+    // fill device list at least once
+    this->on_ControllerWidget_RefreshInputDevicesButtonClicked();
+
     this->inputPollTimer = new QTimer(this);
     connect(this->inputPollTimer, &QTimer::timeout, this, &MainDialog::on_InputPollTimer_triggered);
     this->inputPollTimer->start(50);
-
-    this->inputDevicePollTimer = new QTimer(this);
-    connect(this->inputDevicePollTimer, &QTimer::timeout, this, &MainDialog::on_InputDevicePollTimer_triggered);
-    this->inputDevicePollTimer->start(5000);
 }
 
 MainDialog::~MainDialog()
 {
+}
+
+void MainDialog::addInputDevice(QString deviceName, int deviceNum)
+{
+    for (auto& controllerWidget : this->controllerWidgets)
+    {
+        controllerWidget->AddInputDevice(deviceName, deviceNum);
+    }
+}
+
+void MainDialog::removeInputDevice(QString deviceName, int deviceNum)
+{
+    for (auto& controllerWidget : this->controllerWidgets)
+    {
+        controllerWidget->RemoveInputDevice(deviceName, deviceNum);
+    }
 }
 
 void MainDialog::openController(QString deviceName, int deviceNum)
@@ -95,30 +112,9 @@ void MainDialog::closeController()
     }
 }
 
-void MainDialog::removeCurrentController()
-{
-    for (auto& controllerWidget : this->controllerWidgets)
-    {
-        controllerWidget->RemoveInputDevice(currentDeviceName, currentDeviceNum);
-    }
-}
-
-void MainDialog::addController(int deviceNum)
-{
-    QString deviceName = SDL_GameControllerNameForIndex(deviceNum);
-    for (auto& controllerWidget : this->controllerWidgets)
-    {
-        controllerWidget->AddInputDevice(deviceName, deviceNum);
-    }
-}
-
-#include <iostream>
 void MainDialog::on_InputPollTimer_triggered()
 {
     Widget::ControllerWidget* controllerWidget;
-    QString deviceName;
-    int deviceNum;
-
     controllerWidget = controllerWidgets.at(this->tabWidget->currentIndex());
 
     // if the current controller widget
@@ -127,6 +123,14 @@ void MainDialog::on_InputPollTimer_triggered()
     if (!controllerWidget->IsPluggedIn())
     {
         return;
+    }
+
+    // check if controller has been disconnected,
+    // if so, keep trying to re-open it
+    if (!SDL_GameControllerGetAttached(this->currentController))
+    {
+        this->closeController();
+        this->openController(this->currentDeviceName, this->currentDeviceNum);
     }
 
     // process SDL events
@@ -144,19 +148,6 @@ void MainDialog::on_InputPollTimer_triggered()
                 controllerWidget->SetAxisState((SDL_GameControllerAxis)event.caxis.axis, event.caxis.value);
                 break;
 
-            /*case SDL_CONTROLLERDEVICEREMOVED:
-            {
-                int instanceId = event.cdevice.which;
-                SDL_GameController* controller = SDL_GameControllerFromInstanceID(instanceId);
-
-                std::cout << "removed: " << SDL_GameControllerName(controller) << std::endl;
-                //this->removeCurrentController();
-            }    break;
-
-            case SDL_CONTROLLERDEVICEADDED:
-                this->addController(event.cdevice.which);
-                break;*/
-
             default:
                 break;
         }
@@ -165,8 +156,13 @@ void MainDialog::on_InputPollTimer_triggered()
     controllerWidget->DrawControllerImage();
 }
 
-#include <QList>
-void MainDialog::on_InputDevicePollTimer_triggered()
+void MainDialog::on_ControllerWidget_CurrentInputDeviceChanged(QString deviceName, int deviceNum)
+{
+    this->closeController();
+    this->openController(deviceName, deviceNum);
+}
+
+void MainDialog::on_ControllerWidget_RefreshInputDevicesButtonClicked()
 {
     struct inputDevice_t
     {
@@ -183,15 +179,15 @@ void MainDialog::on_InputDevicePollTimer_triggered()
     static QList<inputDevice_t> oldDeviceList;
     QList<inputDevice_t> newDeviceList;
 
-    QList<inputDevice_t> devicesToBeAdded;
-    QList<inputDevice_t> devicesToBeRemoved;
+    // force-refresh device list in SDL
+    SDL_GameControllerUpdate();
 
     // fill newDeviceList
     for (int i = 0; i < SDL_NumJoysticks(); i++)
     {
         const char* name = nullptr;
 
-        // skip non-gamecontrollers
+        // skip non-gamecontrollers (for now)
         if (!SDL_IsGameController(i))
         {
             continue;
@@ -206,52 +202,30 @@ void MainDialog::on_InputDevicePollTimer_triggered()
     }
 
     // compare newDeviceList with oldDeviceList
-    for (int i = 0; i < newDeviceList.count(); i++)
+    // and signal the changes
+    for (auto& inputDevice : newDeviceList)
     {
-        auto inputDevice = newDeviceList.at(i);
         if (!oldDeviceList.contains(inputDevice))
         {
-            devicesToBeAdded.append(inputDevice);
+            this->addInputDevice(inputDevice.deviceName, inputDevice.deviceNum);
         }
     }
-    for (int i = 0; i< oldDeviceList.count(); i++)
+    for (auto& inputDevice : oldDeviceList)
     {
-        auto inputDevice = oldDeviceList.at(i);
         if (!newDeviceList.contains(inputDevice))
         {
-            devicesToBeRemoved.append(inputDevice);
+            this->removeInputDevice(inputDevice.deviceName, inputDevice.deviceNum);
         }
     }
 
-    // apply changes
-    for (auto& controllerWidget : this->controllerWidgets)
-    {
-        for (auto& inputDevice : devicesToBeAdded) 
-        {
-            controllerWidget->AddInputDevice(inputDevice.deviceName, inputDevice.deviceNum);
-        }
-        for (auto& inputDevice : devicesToBeRemoved)
-        {
-            controllerWidget->RemoveInputDevice(inputDevice.deviceName, inputDevice.deviceNum);
-        }
-    }
-
+    // update oldDeviceList
     oldDeviceList = newDeviceList;
 }
-
-void MainDialog::on_ControllerWidget_CurrentInputDeviceChanged(QString deviceName, int deviceNum)
-{
-    std::cout << "on_ControllerWidget_CurrentInputDeviceChanged" << std::endl;
-
-    this->closeController();
-    this->openController(deviceName, deviceNum);
-}
-
 
 void MainDialog::on_tabWidget_currentChanged(int index)
 {
     QString deviceName;
-    int deviceNum = 0;
+    int deviceNum;
 
     Widget::ControllerWidget* controllerWidget = controllerWidgets.at(index);
     controllerWidget->ClearControllerImage();

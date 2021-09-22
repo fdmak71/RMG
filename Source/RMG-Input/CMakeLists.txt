@@ -14,6 +14,7 @@ pkg_check_modules(SDL2 REQUIRED sdl2)
 set(RMG_INPUT_SOURCES
     UserInterface/Widget/ControllerWidget.ui
     UserInterface/Widget/ControllerWidget.cpp
+    UserInterface/Widget/CustomButton.cpp
     UserInterface/MainDialog.ui
     UserInterface/MainDialog.cpp
     UserInterface/UIResources.qrc
