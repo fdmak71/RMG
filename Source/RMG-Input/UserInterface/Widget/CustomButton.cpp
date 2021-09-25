@@ -46,7 +46,6 @@ void CustomButton::StartTimer()
 void CustomButton::StopTimer()
 {
     this->countDownTimer->stop();
-    controllerWidget->on_CustomButton_TimerStopped(this);
 }
 
 void CustomButton::SetButton(int button)

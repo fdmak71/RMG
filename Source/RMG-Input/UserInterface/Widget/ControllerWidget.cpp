@@ -14,6 +14,8 @@
 #include <QResizeEvent>
 #include <QPainter>
 #include <SDL.h>
+#include <QSvgRenderer>
+#include <iostream>
 
 #define SDL_AXIS_PEAK 32768
 
@@ -23,12 +25,10 @@ ControllerWidget::ControllerWidget(QWidget* parent) : QWidget(parent)
 {
     this->setupUi(this);
 
-    this->controllerPixmap = QIcon(":Resource/Controller_NoAnalogStick.svg").pixmap(this->size());
     this->deadZoneSlider->setValue(15);
     this->analogStickRangeSlider->setValue(100);
     this->controllerPluggedCheckBox->setChecked(false);
 
-    this->needsControllerImageDraw = true;
     this->DrawControllerImage();
 
     this->initializeButtons();
@@ -109,74 +109,12 @@ void ControllerWidget::RemoveInputDevice(QString deviceName, int deviceNum)
 
 void ControllerWidget::DrawControllerImage()
 {
-    if (!this->needsControllerImageDraw)
-    {
-        return;
-    }
-    else
-    { // make sure we don't keep on drawing
-        this->needsControllerImageDraw = false;
-    }
-
-    QPixmap finalControllerPixmap = QPixmap(this->controllerPixmap);
-    QSize controllerPixmapSize = this->controllerPixmap.size();
-    QPainter painter(&finalControllerPixmap);
-    // paint all overlayImages on top of baseImage
-    for (auto& buttonImageUri : this->controllerImages)
-    {
-        QPixmap buttonImage = QIcon(buttonImageUri).pixmap(controllerPixmapSize);
-        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-        painter.drawPixmap(0, 0, buttonImage);
-    }
-
-    // render stick with offset specified by controller axis
-    QPixmap stickImage = QIcon(":Resource/Controller_AnalogStick.svg").pixmap(controllerPixmapSize);
-    painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-
-    int offsetx = 0, offsety = 0;
-    static const int width = controllerPixmapSize.width();
-    static const int height = controllerPixmapSize.height();
-    // considering we're using a vector image,
-    // we'll move the analog stick by a percentage
-    // of the total width/height from the image
-    static const int maxOffsety = ((double)(height * 0.12265f) / 2);
-    static const int maxOffsetx = maxOffsety;
-    // calculate deadzone value based on user input
-    const int deadZoneValue = (SDL_AXIS_PEAK / 100 * deadZoneSlider->value());
-    // calculate offset percentages for the image
-    const int xOffsetPercentage = (double)((double)xAxisState / SDL_AXIS_PEAK * 100);
-    const int yOffsetPercentage = (double)((double)yAxisState / SDL_AXIS_PEAK * 100);
-
-    // make sure we respect the deadzone
-#if 0
-    if ((abs(xState) > deadZoneValue))
-    {
-        offsetx = ((float)maxOffsetx / 100 * xOffsetPercentage);
-    }
-    if ((abs(yState) > deadZoneValue))
-    {
-        offsety = ((float)maxOffsety / 100 * yOffsetPercentage);
-    }
-#else
-    if (sqrt(pow(xAxisState, 2) + pow(yAxisState, 2)) > deadZoneValue)
-    {
-        offsetx = ((float)maxOffsetx / 100 * xOffsetPercentage);
-        offsety = ((float)maxOffsety / 100 * yOffsetPercentage);
-    }
-#endif
-
-    painter.drawPixmap(offsetx, offsety, stickImage);
-    painter.end();
-
-    this->imageLabel->setPixmap(finalControllerPixmap);
+    this->controllerImageWidget->UpdateImage();
 }
 
 void ControllerWidget::ClearControllerImage()
 {
-    this->controllerImages.clear();
-    this->xAxisState = this->yAxisState = 0;
-    this->needsControllerImageDraw = true;
-    this->DrawControllerImage();
+    this->controllerImageWidget->ClearControllerState();
 }
 
 void ControllerWidget::GetCurrentInputDevice(QString& deviceName, int& deviceNum)
@@ -193,11 +131,7 @@ void ControllerWidget::on_deadZoneSlider_valueChanged(int value)
     title += "%";
 
     this->deadZoneGroupBox->setTitle(title);
-
-    // force re-draw controller image
-    // TODO: optimize this
-    this->needsControllerImageDraw = true;
-    this->DrawControllerImage();
+    this->controllerImageWidget->SetDeadzone(value);
 }
 
 void ControllerWidget::on_analogStickRangeSlider_valueChanged(int value)
@@ -277,12 +211,11 @@ void ControllerWidget::on_setupButton_clicked()
 
     for (auto& button : buttonList)
     {
-        button->activateWindow();
+        button->setFocus(Qt::OtherFocusReason);
+        //button->activateWindow();
         button->click();
     }
 }
-
-#include <iostream>
 
 void ControllerWidget::on_CustomButton_released(CustomButton* button)
 {
@@ -292,14 +225,12 @@ void ControllerWidget::on_CustomButton_released(CustomButton* button)
         currentButton->setText(" ");
     }
 
-    std::cout << "on_CustomButton_released" << std::endl;
     currentButton = button;
     button->StartTimer();
 }
 
 void ControllerWidget::on_CustomButton_TimerFinished(CustomButton* button)
 {
-    std::cout << "on_CustomButton_TimerFinished" << std::endl;
 
     if (currentButton == button)
     {
@@ -317,99 +248,61 @@ void ControllerWidget::on_CustomButton_TimerFinished(CustomButton* button)
     button->setText(text);
 }
 
-void ControllerWidget::on_CustomButton_TimerStopped(CustomButton* button)
-{
-   
-}
-
-struct
-{
-    SDL_GameControllerButton button;
-    QString icon;
-} keybindings2[] = 
-{
-    { SDL_CONTROLLER_BUTTON_A, ":Resource/Controller_Pressed_A.svg" },
-    { SDL_CONTROLLER_BUTTON_B, ":Resource/Controller_Pressed_B.svg" },
-    { SDL_CONTROLLER_BUTTON_START, ":Resource/Controller_Pressed_Start.svg" },
-  //  { Qt::Key_4, ":Resource/Controller_Pressed_AnalogStick.svg" },
-    { SDL_CONTROLLER_BUTTON_DPAD_UP, ":Resource/Controller_Pressed_DpadUp.svg" },
-    { SDL_CONTROLLER_BUTTON_DPAD_DOWN, ":Resource/Controller_Pressed_DpadDown.svg" },
-    { SDL_CONTROLLER_BUTTON_DPAD_LEFT, ":Resource/Controller_Pressed_DpadLeft.svg" },
-    { SDL_CONTROLLER_BUTTON_DPAD_RIGHT, ":Resource/Controller_Pressed_DpadRight.svg" },
-  //  { Qt::Key_I, ":Resource/Controller_Pressed_CButtonUp.svg" },
-  //  { Qt::Key_K, ":Resource/Controller_Pressed_CButtonDown.svg" },
-  //  { Qt::Key_J, ":Resource/Controller_Pressed_CButtonLeft.svg" },
-  //  { Qt::Key_L, ":Resource/Controller_Pressed_CButtonRight.svg" },
-    { SDL_CONTROLLER_BUTTON_LEFTSHOULDER, ":Resource/Controller_Pressed_LeftTrigger.svg" },
-    { SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, ":Resource/Controller_Pressed_RightTrigger.svg" },
-};
-
-void ControllerWidget::SetButtonState(SDL_GameControllerButton button, int state)
+void ControllerWidget::SetButtonState(SDL_GameControllerButton sdlButton, int state)
 {
     if (currentButton != nullptr)
     {
         if (state)
         {
-            std::cout << "currentButton != nullptr" << std::endl;
             currentButton->StopTimer();
-            currentButton->SetButton(button);
-            currentButton->setText(SDL_GameControllerGetStringForButton(button));
+            currentButton->SetButton(sdlButton);
+            currentButton->setText(SDL_GameControllerGetStringForButton(sdlButton));
             currentButton = nullptr;
         }
         return;
     }
 
-    struct
+    static const struct
     {
-        enum N64CONTROLLER_STATE n64button;
-        CustomButton* customButton;
-        QString icon;
-    } keybindings[] =
+         enum N64CONTROLLER_BUTTON button;
+        CustomButton* buttonWidget;
+    } buttons[] =
     {
-        { N64CONTROLLER_BUTTON_A, this->aButton, ":Resource/Controller_Pressed_A.svg"},
-        { N64CONTROLLER_BUTTON_B, this->bButton, ":Resource/Controller_Pressed_B.svg" },
-        { N64CONTROLLER_BUTTON_START, this->startButton, ":Resource/Controller_Pressed_Start.svg"},
-        { N64CONTROLLER_BUTTON_DPAD_UP, this->dpadUpButton, ":Resource/Controller_Pressed_DpadUp.svg" },
-        { N64CONTROLLER_BUTTON_DPAD_DOWN, this->dpadDownButton, ":Resource/Controller_Pressed_DpadDown.svg" },
-        { N64CONTROLLER_BUTTON_DPAD_LEFT, this->dpadLeftButton, ":Resource/Controller_Pressed_DpadLeft.svg" },
-        { N64CONTROLLER_BUTTON_DPAD_RIGHT, this->dpadRightButton, ":Resource/Controller_Pressed_DpadRight.svg" },
-        { N64CONTROLLER_BUTTON_CBUTTONS_UP, this->cbuttonUpButton, ":Resource/Controller_Pressed_CButtonUp.svg" },
-        { N64CONTROLLER_BUTTON_CBUTTONS_DOWN, this->cbuttonDownButton, ":Resource/Controller_Pressed_CButtonDown.svg" },
-        { N64CONTROLLER_BUTTON_CBUTTONS_LEFT, this->cbuttonLeftButton, ":Resource/Controller_Pressed_CButtonLeft.svg" },
-        { N64CONTROLLER_BUTTON_CBUTTONS_RIGHT, this->cbuttonRightButton, ":Resource/Controller_Pressed_CButtonRight.svg" },
-        { N64CONTROLLER_BUTTON_LEFTTRIGGER, this->leftTriggerButton, ":Resource/Controller_Pressed_LeftTrigger.svg" },
-        { N64CONTROLLER_BUTTON_RIGHTTRIGGER, this->rightTriggerButton, ":Resource/Controller_Pressed_RightTrigger.svg" },
+        { N64CONTROLLER_BUTTON_A, this->aButton, },
+        { N64CONTROLLER_BUTTON_B, this->bButton, },
+        { N64CONTROLLER_BUTTON_START, this->startButton },
+        { N64CONTROLLER_BUTTON_DPAD_UP, this->dpadUpButton },
+        { N64CONTROLLER_BUTTON_DPAD_DOWN, this->dpadDownButton },
+        { N64CONTROLLER_BUTTON_DPAD_LEFT, this->dpadLeftButton },
+        { N64CONTROLLER_BUTTON_DPAD_RIGHT, this->dpadRightButton },
+        { N64CONTROLLER_BUTTON_CBUTTONS_UP, this->cbuttonUpButton },
+        { N64CONTROLLER_BUTTON_CBUTTONS_DOWN, this->cbuttonDownButton },
+        { N64CONTROLLER_BUTTON_CBUTTONS_LEFT, this->cbuttonLeftButton  },
+        { N64CONTROLLER_BUTTON_CBUTTONS_RIGHT, this->cbuttonRightButton },
+        { N64CONTROLLER_BUTTON_LEFTTRIGGER, this->leftTriggerButton },
+        { N64CONTROLLER_BUTTON_RIGHTTRIGGER, this->rightTriggerButton },
     };
 
-    for (auto& keybinding : keybindings)
+    for (auto& button : buttons)
     {
-        if (keybinding.customButton->GetButton() == button)
+        if (button.buttonWidget->GetButton() == sdlButton)
         {
-            this->controllerState[keybinding.n64button] = state;
-            if (state && !controllerImages.contains(keybinding.icon))
-            {
-                controllerImages.append(keybinding.icon);
-                this->needsControllerImageDraw = true;
-            } else if (!state && controllerImages.contains(keybinding.icon))
-            {
-                controllerImages.removeOne(keybinding.icon);
-                this->needsControllerImageDraw = true;
-            }
+            this->controllerImageWidget->SetButtonState(button.button, state);
         }
     }
 }
 
 void ControllerWidget::SetAxisState(SDL_GameControllerAxis axis, int16_t state)
 {
+    const double statePercentage = (double)state / SDL_AXIS_PEAK * 100;
+
     switch (axis)
     {
         case SDL_CONTROLLER_AXIS_LEFTX:
-            needsControllerImageDraw = true;
-            xAxisState = state;
+            this->controllerImageWidget->SetXAxisState(statePercentage);
             break;
         case SDL_CONTROLLER_AXIS_LEFTY:
-            needsControllerImageDraw = true;
-            yAxisState = state;
+            this->controllerImageWidget->SetYAxisState(statePercentage);
             break;
         default:
             break;
