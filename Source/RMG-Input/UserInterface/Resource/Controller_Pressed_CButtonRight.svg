@@ -8,7 +8,7 @@
    style="clip-rule:evenodd;fill-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2"
    id="svg21"
    sodipodi:docname="Controller_Pressed_CButtonRight.svg"
-   inkscape:version="1.1 (c4e8f9ed74, 2021-05-24)"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -43,7 +43,7 @@
     
     
 <circle
-   style="opacity:0.62;fill:#ececec;fill-rule:evenodd;stroke-width:0.279671"
+   style="opacity:0.62;fill:#999999;fill-rule:evenodd;stroke-width:0.279671;fill-opacity:1"
    id="path42"
    cx="6185.418"
    cy="2000.9888"
