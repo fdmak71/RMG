@@ -77,7 +77,7 @@ void ControllerImageWidget::ClearControllerState()
     // reset x axis state
     if (this->xAxisState != 0)
     {
-        this->yAxisState = 0;
+        this->xAxisState = 0;
         this->needImageUpdate = true;
     }
 
