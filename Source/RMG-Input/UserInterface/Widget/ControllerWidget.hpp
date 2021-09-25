@@ -30,6 +30,7 @@ class ControllerWidget : public QWidget, Ui::ControllerWidget
 
 private:
     QList<QString> inputDeviceNameList;
+    CustomButton* currentButton = nullptr;
 
     void initializeButtons();
 public:

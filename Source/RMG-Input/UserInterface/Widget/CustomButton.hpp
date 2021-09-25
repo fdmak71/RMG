@@ -17,10 +17,17 @@ namespace UserInterface
 {
 namespace Widget
 {
+
+// we can't include ControllerWidget.hpp
+// because that header includes this header,
+// so forward-declare it to prevent issues
+class ControllerWidget;
+
 class CustomButton : public QPushButton
 {
 private:
-	QTimer* countDownTimer;
+	QTimer* countDownTimer = nullptr;
+	ControllerWidget* controllerWidget = nullptr;
 	int currentCountDownNum = 0;
 	int button = -1;
 

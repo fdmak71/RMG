@@ -200,8 +200,6 @@ void ControllerWidget::on_controllerPluggedCheckBox_toggled(bool value)
     this->ClearControllerImage();
 }
 
-static CustomButton* currentButton = nullptr;
-
 void ControllerWidget::on_setupButton_clicked()
 {
     CustomButton* buttonList[] =
@@ -219,22 +217,21 @@ void ControllerWidget::on_setupButton_clicked()
 
 void ControllerWidget::on_CustomButton_released(CustomButton* button)
 {
-    if (currentButton != nullptr)
+    if (this->currentButton != nullptr)
     {
-        currentButton->StopTimer();
-        currentButton->setText(" ");
+        this->currentButton->StopTimer();
+        this->currentButton->setText(" ");
     }
 
-    currentButton = button;
+    this->currentButton = button;
     button->StartTimer();
 }
 
 void ControllerWidget::on_CustomButton_TimerFinished(CustomButton* button)
 {
-
-    if (currentButton == button)
+    if (this->currentButton == button)
     {
-        currentButton = nullptr;
+        this->currentButton = nullptr;
     }
 
     QString text = " ";
@@ -250,19 +247,19 @@ void ControllerWidget::on_CustomButton_TimerFinished(CustomButton* button)
 
 void ControllerWidget::SetButtonState(SDL_GameControllerButton sdlButton, int state)
 {
-    if (currentButton != nullptr)
+    if (this->currentButton != nullptr)
     {
         if (state)
         {
-            currentButton->StopTimer();
-            currentButton->SetButton(sdlButton);
-            currentButton->setText(SDL_GameControllerGetStringForButton(sdlButton));
-            currentButton = nullptr;
+            this->currentButton->StopTimer();
+            this->currentButton->SetButton(sdlButton);
+            this->currentButton->setText(SDL_GameControllerGetStringForButton(sdlButton));
+            this->currentButton = nullptr;
         }
         return;
     }
 
-    static const struct
+    const struct
     {
          enum N64CONTROLLER_BUTTON button;
         CustomButton* buttonWidget;

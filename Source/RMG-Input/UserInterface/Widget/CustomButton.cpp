@@ -12,8 +12,6 @@
 
 using namespace UserInterface::Widget;
 
-static ControllerWidget* controllerWidget = nullptr;
-
 CustomButton::CustomButton(QWidget* parent) : QPushButton(parent)
 {
 	this->countDownTimer = new QTimer(this);	
@@ -27,12 +25,12 @@ CustomButton::~CustomButton()
 
 void CustomButton::Initialize(QWidget* widget)
 {
-    controllerWidget = (ControllerWidget*)widget;
+    this->controllerWidget = (ControllerWidget*)widget;
 
     connect(this, &QPushButton::released, 
     [=]
     {
-        controllerWidget->on_CustomButton_released(this);
+        emit this->controllerWidget->on_CustomButton_released(this);
     });
 }
 
@@ -67,7 +65,7 @@ void CustomButton::on_countDownTimer_triggered()
         this->setText("");
         this->currentCountDownNum = 5;
         this->countDownTimer->stop();
-        controllerWidget->on_CustomButton_TimerFinished(this);
+        emit this->controllerWidget->on_CustomButton_TimerFinished(this);
     }
 
     this->currentCountDownNum--;
