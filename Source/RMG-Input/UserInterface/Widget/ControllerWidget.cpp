@@ -384,12 +384,25 @@ void ControllerWidget::on_MainDialog_SdlEvent(SDL_Event* event)
                     joystick.buttonWidget->GetInputData() == sdlAxis &&
                     joystick.buttonWidget->GetExtraInputData() == sdlAxisDirection)
                 {
-                    const int value = (
-                        joystick.direction == InputAxisDirection::Up ?
-                            (double)((double)sdlAxisValue / SDL_AXIS_PEAK * 100) :
-                            -(double)((double)sdlAxisValue / SDL_AXIS_PEAK * 100)
-                    );
-                    this->controllerImageWidget->SetYAxisState(value);
+                    const int value = -(double)((double)sdlAxisValue / SDL_AXIS_PEAK * 100);
+
+                    switch (joystick.direction)
+                    {
+                        case InputAxisDirection::Up:
+                        case InputAxisDirection::Down:
+                        {
+                            this->controllerImageWidget->SetYAxisState(value);
+                        } break;
+
+                        case InputAxisDirection::Left:
+                        case InputAxisDirection::Right:
+                        {
+                            this->controllerImageWidget->SetXAxisState(value);
+                        } break;
+
+                        default:
+                            break;
+                    }
                 }
             }
         } break;
