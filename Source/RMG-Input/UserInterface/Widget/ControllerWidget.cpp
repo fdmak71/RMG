@@ -343,7 +343,7 @@ void ControllerWidget::on_MainDialog_SdlEvent(SDL_Event* event)
             // make sure the user presses the axis
             // more than 50%, otherwise we might detect
             // an accidental axis movement (due to i.e deadzone)
-            const bool sdlAxisButtonPressed = (abs(sdlAxisValue) > (SDL_AXIS_PEAK / 2));
+            const bool sdlAxisButtonPressed = (abs(sdlAxisValue) >= (SDL_AXIS_PEAK / 2));
             const int sdlAxisDirection = (sdlAxisValue > 0 ? 1 : 0);
             QString name = SDL_GameControllerGetStringForAxis(sdlAxis);
             name.append(sdlAxisValue > 0 ? "+" : "-");
