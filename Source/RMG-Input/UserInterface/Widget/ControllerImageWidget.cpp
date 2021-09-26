@@ -159,12 +159,20 @@ void ControllerImageWidget::paintEvent(QPaintEvent *event)
     // of the total width/height from the image
     const double maxOffsety = ((double)(height * 0.12265f) / 2);
     const double maxOffsetx = maxOffsety;
+    const double dist = sqrt(pow(this->xAxisState, 2) + pow(this->yAxisState, 2));
 
     // take deadzone into account
-    if (sqrt(pow(this->xAxisState, 2) + pow(this->yAxisState, 2)) > this->deadzoneValue)
+    if (dist > this->deadzoneValue)
     {
         offsetx = (maxOffsetx / 100 * this->xAxisState);
         offsety = (maxOffsety / 100 * this->yAxisState);
+    }
+
+    // take circle range into account
+    if (dist > 100)
+    {
+        offsetx = (maxOffsetx / 100 * (this->xAxisState / dist * 100));
+        offsety = (maxOffsety / 100 * (this->yAxisState / dist * 100));
     }
 
     // adjust rect with offset
