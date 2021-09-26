@@ -24,7 +24,7 @@ class ControllerImageWidget : public QWidget
 
 private:
     // button state
-    bool buttonState[N64CONTROLLER_NUM] = {0};
+    bool buttonState[(int)N64ControllerButton::Invalid] = {0};
     // x axis state, -100-100
     int xAxisState = 0;
     // y axis state, -100-100
@@ -37,7 +37,7 @@ public:
     ControllerImageWidget(QWidget* parent);
     ~ControllerImageWidget();
 
-    void SetButtonState(enum N64CONTROLLER_BUTTON button, bool state);
+    void SetButtonState(enum N64ControllerButton button, bool state);
     void SetXAxisState(int xAxis);
     void SetYAxisState(int yAxis);
     void SetDeadzone(int value);

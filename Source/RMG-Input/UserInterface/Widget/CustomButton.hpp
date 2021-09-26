@@ -13,6 +13,8 @@
 #include <QPushButton>
 #include <QTimer>
 
+#include "common.hpp"
+
 namespace UserInterface
 {
 namespace Widget
@@ -29,8 +31,14 @@ private:
 	QTimer* countDownTimer = nullptr;
 	ControllerWidget* controllerWidget = nullptr;
 	int currentCountDownNum = 0;
-	int button = -1;
+	enum InputType inputType = InputType::Invalid;
+	int inputData = -1;
+	int extraInputData = -1;
 
+	enum InputType savedInputType = InputType::Invalid;
+	int savedInputData = -1;
+	int savedExtraInputData = -1;
+	QString savedText;
 public:
 	CustomButton(QWidget* parent);
 	~CustomButton();
@@ -39,8 +47,15 @@ public:
 	void StartTimer();
 	void StopTimer();
 
-	void SetButton(int button);
-	int GetButton();
+
+	void SetInputData(enum InputType type, int value, QString name);
+	void SetExtraInputData(int value);
+	enum InputType GetInputType();
+	int GetInputData();
+	int GetExtraInputData();
+
+	void SaveState();
+	void RestoreState();
 
 private slots:
 	void on_countDownTimer_triggered();

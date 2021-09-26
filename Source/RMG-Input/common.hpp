@@ -1,23 +1,48 @@
+/*
+ * Rosalie's Mupen GUI - https://github.com/Rosalie241/RMG
+ *  Copyright (C) 2020 Rosalie Wanders <rosalie@mailbox.org>
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License version 3.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef COMMON_HPP
 #define COMMON_HPP
 
-enum N64CONTROLLER_BUTTON
+enum class N64ControllerButton
 {
-    N64CONTROLLER_BUTTON_A = 0,
-    N64CONTROLLER_BUTTON_B,
-    N64CONTROLLER_BUTTON_START,
-    N64CONTROLLER_BUTTON_DPAD_UP,
-    N64CONTROLLER_BUTTON_DPAD_DOWN,
-    N64CONTROLLER_BUTTON_DPAD_LEFT,
-    N64CONTROLLER_BUTTON_DPAD_RIGHT,
-    N64CONTROLLER_BUTTON_CBUTTONS_UP,
-    N64CONTROLLER_BUTTON_CBUTTONS_DOWN,
-    N64CONTROLLER_BUTTON_CBUTTONS_LEFT,
-    N64CONTROLLER_BUTTON_CBUTTONS_RIGHT,
-    N64CONTROLLER_BUTTON_LEFTTRIGGER,
-    N64CONTROLLER_BUTTON_RIGHTTRIGGER,
-    N64CONTROLLER_BUTTON_ZTRIGGER,
-    N64CONTROLLER_NUM
+    A = 0,
+    B,
+    Start,
+    DpadUp,
+    DpadDown,
+    DpadLeft,
+    DpadRight,
+    CButtonUp,
+    CButtonDown,
+    CButtonLeft,
+    CButtonRight,
+    LeftTrigger,
+    RightTrigger,
+    ZTrigger,
+    Invalid
+};
+
+enum class InputType
+{
+    Keyboard = -1,
+    GamepadButton,
+    GamepadAxis,
+    Invalid
+};
+
+enum class InputAxisDirection
+{
+    Up = 0,
+    Down,
+    Left,
+    Right
 };
 
 #endif // COMMON_HPP

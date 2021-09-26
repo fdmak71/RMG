@@ -32,6 +32,21 @@ private:
     QList<QString> inputDeviceNameList;
     CustomButton* currentButton = nullptr;
 
+    struct buttonWidgetMapping
+    {
+        enum N64ControllerButton button;
+        CustomButton* buttonWidget;
+    };
+
+    struct axisWidgetMapping
+    {
+        enum InputAxisDirection direction;
+        CustomButton* buttonWidget;
+    };
+
+    QList<buttonWidgetMapping> buttonWidgetMappings;
+    QList<axisWidgetMapping> joystickWidgetMappings;
+
     void initializeButtons();
 public:
     ControllerWidget(QWidget* parent);
@@ -44,8 +59,6 @@ public:
     void ClearControllerImage();
 
     void GetCurrentInputDevice(QString& deviceName, int& deviceNum);
-    void SetButtonState(SDL_GameControllerButton button, int state);
-    void SetAxisState(SDL_GameControllerAxis axis, int16_t state);
     bool IsPluggedIn();
 
 private slots:
@@ -62,6 +75,8 @@ public slots:
     void on_CustomButton_released(CustomButton* button);
     void on_CustomButton_TimerFinished(CustomButton* button);
 
+    void on_MainDialog_SdlEvent(SDL_Event* event);
+    void on_MainDialog_SdlEventPollFinished();
 signals:
     void CurrentInputDeviceChanged(QString deviceName, int deviceNum);
     void RefreshInputDevicesButtonClicked();

@@ -46,14 +46,48 @@ void CustomButton::StopTimer()
     this->countDownTimer->stop();
 }
 
-void CustomButton::SetButton(int button)
+void CustomButton::SetInputData(enum InputType type, int value, QString name)
 {
-    this->button = button;
+    this->inputType = type;
+    this->inputData = value;
+    this->setText(name);
+    this->StopTimer();
 }
 
-int CustomButton::GetButton()
+void CustomButton::SetExtraInputData(int value)
 {
-    return this->button;
+    this->extraInputData = value;
+}
+
+enum InputType CustomButton::GetInputType()
+{
+    return this->inputType;
+}
+
+int CustomButton::GetInputData()
+{
+    return this->inputData;
+}
+
+int CustomButton::GetExtraInputData()
+{
+    return this->extraInputData;
+}
+
+void CustomButton::SaveState()
+{
+    this->savedInputType = this->inputType;
+    this->savedInputData = this->inputData;
+    this->savedExtraInputData = this->extraInputData;
+    this->savedText = this->text();
+}
+
+void CustomButton::RestoreState()
+{
+    this->inputType = this->savedInputType;
+    this->inputData = this->savedInputData;
+    this->extraInputData = this->savedExtraInputData;
+    this->setText(this->savedText);
 }
 
 void CustomButton::on_countDownTimer_triggered()

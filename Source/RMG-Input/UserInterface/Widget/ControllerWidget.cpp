@@ -8,6 +8,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "ControllerWidget.hpp"
+#include "SDL_events.h"
 #include "SDL_gamecontroller.h"
 
 #include <QPixmap>
@@ -30,6 +31,31 @@ ControllerWidget::ControllerWidget(QWidget* parent) : QWidget(parent)
     this->controllerPluggedCheckBox->setChecked(false);
 
     this->DrawControllerImage();
+
+    this->buttonWidgetMappings.append(
+    {
+        { N64ControllerButton::A, this->aButton, },
+        { N64ControllerButton::B, this->bButton, },
+        { N64ControllerButton::Start, this->startButton },
+        { N64ControllerButton::DpadUp, this->dpadUpButton },
+        { N64ControllerButton::DpadDown, this->dpadDownButton },
+        { N64ControllerButton::DpadLeft, this->dpadLeftButton },
+        { N64ControllerButton::DpadRight, this->dpadRightButton },
+        { N64ControllerButton::CButtonUp, this->cbuttonUpButton },
+        { N64ControllerButton::CButtonDown, this->cbuttonDownButton },
+        { N64ControllerButton::CButtonLeft, this->cbuttonLeftButton  },
+        { N64ControllerButton::CButtonRight, this->cbuttonRightButton },
+        { N64ControllerButton::LeftTrigger, this->leftTriggerButton },
+        { N64ControllerButton::RightTrigger, this->rightTriggerButton },
+    });
+
+    this->joystickWidgetMappings.append(
+    {
+        { InputAxisDirection::Up, this->analogStickUpButton },
+        { InputAxisDirection::Down, this->analogStickDownButton },
+        { InputAxisDirection::Left, this->analogStickLeftButton },
+        { InputAxisDirection::Right, this->analogStickRightButton },
+    });
 
     this->initializeButtons();
 }
@@ -220,10 +246,11 @@ void ControllerWidget::on_CustomButton_released(CustomButton* button)
     if (this->currentButton != nullptr)
     {
         this->currentButton->StopTimer();
-        this->currentButton->setText(" ");
+        this->currentButton->RestoreState();
     }
 
     this->currentButton = button;
+    button->SaveState();
     button->StartTimer();
 }
 
@@ -234,17 +261,150 @@ void ControllerWidget::on_CustomButton_TimerFinished(CustomButton* button)
         this->currentButton = nullptr;
     }
 
-    QString text = " ";
-
-    SDL_GameControllerButton buttonNum = (SDL_GameControllerButton)button->GetButton();
-    if ((int)buttonNum != -1)
-    {
-        text = SDL_GameControllerGetStringForButton(buttonNum);
-    }
-
-    button->setText(text);
+    button->RestoreState();
 }
 
+void ControllerWidget::on_MainDialog_SdlEvent(SDL_Event* event)
+{
+    switch (event->type)
+    {
+        case SDL_CONTROLLERBUTTONDOWN:
+        case SDL_CONTROLLERBUTTONUP:
+        { // gamepad button
+            const SDL_GameControllerButton sdlButton = (SDL_GameControllerButton)event->cbutton.button;
+            const bool sdlButtonPressed = (event->type == SDL_CONTROLLERBUTTONDOWN);
+
+            // handle button widget
+            if (this->currentButton != nullptr)
+            {
+                if (sdlButtonPressed)
+                {
+                    this->currentButton->SetInputData(
+                        InputType::GamepadButton, 
+                        sdlButton,
+                        SDL_GameControllerGetStringForButton(sdlButton)
+                    );
+                    this->currentButton = nullptr;
+                }
+                break;
+            }
+
+            // update controller button state
+            for (auto& button : this->buttonWidgetMappings)
+            {
+                if (button.buttonWidget->GetInputType() == InputType::GamepadButton &&
+                    button.buttonWidget->GetInputData() == sdlButton)
+                {
+                    this->controllerImageWidget->SetButtonState(button.button, sdlButtonPressed);
+                }
+            }
+
+            // update controller analog stick state
+            for (auto& joystick : this->joystickWidgetMappings)
+            {
+                if (joystick.buttonWidget->GetInputType() == InputType::GamepadButton &&
+                    joystick.buttonWidget->GetInputData() == sdlButton)
+                {
+                    switch (joystick.direction)
+                    {
+                        case InputAxisDirection::Up:
+                        case InputAxisDirection::Down:
+                        {
+                            const int value = (
+                                joystick.direction == InputAxisDirection::Up ?
+                                    100 :
+                                    -100
+                            );
+                            this->controllerImageWidget->SetYAxisState(sdlButtonPressed ? value : 0);
+                        } break;
+
+                        case InputAxisDirection::Left:
+                        case InputAxisDirection::Right:
+                        {
+                            const int value = (
+                                joystick.direction == InputAxisDirection::Left ?
+                                    100 :
+                                    -100
+                            );
+                            this->controllerImageWidget->SetXAxisState(sdlButtonPressed ? value : 0);
+                        } break;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+        } break;
+
+        case SDL_CONTROLLERAXISMOTION:
+        { // gamepad axis
+            const SDL_GameControllerAxis sdlAxis = (SDL_GameControllerAxis)event->caxis.axis;
+            const int sdlAxisValue = event->caxis.value;
+            // make sure the user presses the axis
+            // more than 50%, otherwise we might detect
+            // an accidental axis movement (due to i.e deadzone)
+            const bool sdlAxisButtonPressed = (abs(sdlAxisValue) > (SDL_AXIS_PEAK / 2));
+            const int sdlAxisDirection = (sdlAxisValue > 0 ? 1 : 0);
+            QString name = SDL_GameControllerGetStringForAxis(sdlAxis);
+            name.append(sdlAxisValue > 0 ? "+" : "-");
+
+            // handle button widget
+            if (this->currentButton != nullptr)
+            {
+                if (sdlAxisButtonPressed)
+                {
+                    this->currentButton->SetInputData(
+                        InputType::GamepadAxis, 
+                        sdlAxis,
+                        name
+                    );
+                    this->currentButton->SetExtraInputData(
+                        sdlAxisDirection
+                    );
+                    this->currentButton = nullptr;
+                }
+                break;
+            }
+
+            // update controller button state
+            for (auto& button : this->buttonWidgetMappings)
+            {
+                if (button.buttonWidget->GetInputType() == InputType::GamepadAxis &&
+                    button.buttonWidget->GetInputData() == sdlAxis &&
+                    button.buttonWidget->GetExtraInputData() == sdlAxisDirection)
+                {
+                    this->controllerImageWidget->SetButtonState(button.button, sdlAxisButtonPressed);
+                }
+            }
+
+            // update controller analog stick state
+            for (auto& joystick : this->joystickWidgetMappings)
+            {
+                if (joystick.buttonWidget->GetInputType() == InputType::GamepadAxis &&
+                    joystick.buttonWidget->GetInputData() == sdlAxis &&
+                    joystick.buttonWidget->GetExtraInputData() == sdlAxisDirection)
+                {
+                    const int value = (
+                        joystick.direction == InputAxisDirection::Up ?
+                            (double)((double)sdlAxisValue / SDL_AXIS_PEAK * 100) :
+                            -(double)((double)sdlAxisValue / SDL_AXIS_PEAK * 100)
+                    );
+                    this->controllerImageWidget->SetYAxisState(value);
+                }
+            }
+        } break;
+
+        default:
+            break;
+    }
+}
+
+void ControllerWidget::on_MainDialog_SdlEventPollFinished()
+{
+    this->controllerImageWidget->UpdateImage();
+}
+
+/*
 void ControllerWidget::SetButtonState(SDL_GameControllerButton sdlButton, int state)
 {
     if (this->currentButton != nullptr)
@@ -257,35 +417,6 @@ void ControllerWidget::SetButtonState(SDL_GameControllerButton sdlButton, int st
             this->currentButton = nullptr;
         }
         return;
-    }
-
-    const struct
-    {
-         enum N64CONTROLLER_BUTTON button;
-        CustomButton* buttonWidget;
-    } buttons[] =
-    {
-        { N64CONTROLLER_BUTTON_A, this->aButton, },
-        { N64CONTROLLER_BUTTON_B, this->bButton, },
-        { N64CONTROLLER_BUTTON_START, this->startButton },
-        { N64CONTROLLER_BUTTON_DPAD_UP, this->dpadUpButton },
-        { N64CONTROLLER_BUTTON_DPAD_DOWN, this->dpadDownButton },
-        { N64CONTROLLER_BUTTON_DPAD_LEFT, this->dpadLeftButton },
-        { N64CONTROLLER_BUTTON_DPAD_RIGHT, this->dpadRightButton },
-        { N64CONTROLLER_BUTTON_CBUTTONS_UP, this->cbuttonUpButton },
-        { N64CONTROLLER_BUTTON_CBUTTONS_DOWN, this->cbuttonDownButton },
-        { N64CONTROLLER_BUTTON_CBUTTONS_LEFT, this->cbuttonLeftButton  },
-        { N64CONTROLLER_BUTTON_CBUTTONS_RIGHT, this->cbuttonRightButton },
-        { N64CONTROLLER_BUTTON_LEFTTRIGGER, this->leftTriggerButton },
-        { N64CONTROLLER_BUTTON_RIGHTTRIGGER, this->rightTriggerButton },
-    };
-
-    for (auto& button : buttons)
-    {
-        if (button.buttonWidget->GetButton() == sdlButton)
-        {
-            this->controllerImageWidget->SetButtonState(button.button, state);
-        }
     }
 }
 
@@ -305,7 +436,7 @@ void ControllerWidget::SetAxisState(SDL_GameControllerAxis axis, int16_t state)
             break;
     }
 }
-
+*/
 bool ControllerWidget::IsPluggedIn()
 {
     return this->controllerPluggedCheckBox->isChecked();

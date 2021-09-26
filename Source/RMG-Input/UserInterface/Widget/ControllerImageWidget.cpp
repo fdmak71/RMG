@@ -26,11 +26,11 @@ ControllerImageWidget::~ControllerImageWidget()
 
 }
 
-void ControllerImageWidget::SetButtonState(enum N64CONTROLLER_BUTTON button, bool state)
+void ControllerImageWidget::SetButtonState(enum N64ControllerButton button, bool state)
 {
-    if (this->buttonState[button] != state)
+    if (this->buttonState[(int)button] != state)
     {
-        this->buttonState[button] = state;
+        this->buttonState[(int)button] = state;
         this->needImageUpdate = true;
     }
 }
@@ -65,7 +65,7 @@ void ControllerImageWidget::SetDeadzone(int value)
 void ControllerImageWidget::ClearControllerState()
 {
     // reset button state
-    for (int i = 0; i < N64CONTROLLER_NUM; i++)
+    for (int i = 0; i < (int)N64ControllerButton::Invalid; i++)
     {
         if (this->buttonState[i])
         {
@@ -108,23 +108,23 @@ void ControllerImageWidget::paintEvent(QPaintEvent *event)
  
     static const struct
     {
-        enum N64CONTROLLER_BUTTON button;
+        enum N64ControllerButton button;
         QString imageUri;
     } buttons[] =
     {
-        { N64CONTROLLER_BUTTON_A, ":Resource/Controller_Pressed_A.svg" },
-        { N64CONTROLLER_BUTTON_B, ":Resource/Controller_Pressed_B.svg" },
-        { N64CONTROLLER_BUTTON_START, ":Resource/Controller_Pressed_Start.svg" },
-        { N64CONTROLLER_BUTTON_DPAD_UP, ":Resource/Controller_Pressed_DpadUp.svg" },
-        { N64CONTROLLER_BUTTON_DPAD_DOWN, ":Resource/Controller_Pressed_DpadDown.svg" },
-        { N64CONTROLLER_BUTTON_DPAD_LEFT, ":Resource/Controller_Pressed_DpadLeft.svg" },
-        { N64CONTROLLER_BUTTON_DPAD_RIGHT, ":Resource/Controller_Pressed_DpadRight.svg" },
-        { N64CONTROLLER_BUTTON_CBUTTONS_UP, ":Resource/Controller_Pressed_CButtonUp.svg" },
-        { N64CONTROLLER_BUTTON_CBUTTONS_DOWN, ":Resource/Controller_Pressed_CButtonDown.svg" },
-        { N64CONTROLLER_BUTTON_CBUTTONS_LEFT, ":Resource/Controller_Pressed_CButtonLeft.svg" },
-        { N64CONTROLLER_BUTTON_CBUTTONS_RIGHT, ":Resource/Controller_Pressed_CButtonRight.svg" },
-        { N64CONTROLLER_BUTTON_LEFTTRIGGER, ":Resource/Controller_Pressed_LeftTrigger.svg" },
-        { N64CONTROLLER_BUTTON_RIGHTTRIGGER, ":Resource/Controller_Pressed_RightTrigger.svg" },
+        { N64ControllerButton::A, ":Resource/Controller_Pressed_A.svg" },
+        { N64ControllerButton::B, ":Resource/Controller_Pressed_B.svg" },
+        { N64ControllerButton::Start, ":Resource/Controller_Pressed_Start.svg" },
+        { N64ControllerButton::DpadUp, ":Resource/Controller_Pressed_DpadUp.svg" },
+        { N64ControllerButton::DpadDown, ":Resource/Controller_Pressed_DpadDown.svg" },
+        { N64ControllerButton::DpadLeft, ":Resource/Controller_Pressed_DpadLeft.svg" },
+        { N64ControllerButton::DpadRight, ":Resource/Controller_Pressed_DpadRight.svg" },
+        { N64ControllerButton::CButtonUp, ":Resource/Controller_Pressed_CButtonUp.svg" },
+        { N64ControllerButton::CButtonDown, ":Resource/Controller_Pressed_CButtonDown.svg" },
+        { N64ControllerButton::CButtonLeft, ":Resource/Controller_Pressed_CButtonLeft.svg" },
+        { N64ControllerButton::CButtonRight, ":Resource/Controller_Pressed_CButtonRight.svg" },
+        { N64ControllerButton::LeftTrigger, ":Resource/Controller_Pressed_LeftTrigger.svg" },
+        { N64ControllerButton::RightTrigger, ":Resource/Controller_Pressed_RightTrigger.svg" },
     };
 
     static const QString baseImageUri = ":Resource/Controller_NoAnalogStick.svg";
@@ -139,7 +139,7 @@ void ControllerImageWidget::paintEvent(QPaintEvent *event)
     // when the button is pressed
     for (auto& button : buttons)
     {
-        if (this->buttonState[button.button])
+        if (this->buttonState[(int)button.button])
         {
             renderer.load(button.imageUri);
             renderer.setAspectRatioMode(Qt::KeepAspectRatio);
@@ -153,18 +153,18 @@ void ControllerImageWidget::paintEvent(QPaintEvent *event)
 
     QRectF rectF = renderer.viewBoxF();
     double offsetx = 0, offsety = 0;
-    static const int width = rectF.width();
-    static const int height = rectF.height();
+    const int width = rectF.width();
+    const int height = rectF.height();
     // we'll move the analog stick by a percentage
     // of the total width/height from the image
-    static const double maxOffsety = ((double)(height * 0.12265f) / 2);
-    static const double maxOffsetx = maxOffsety;//(double)height * 0.12265f;
+    const double maxOffsety = ((double)(height * 0.12265f) / 2);
+    const double maxOffsetx = maxOffsety;
 
     // take deadzone into account
     if (sqrt(pow(this->xAxisState, 2) + pow(this->yAxisState, 2)) > this->deadzoneValue)
     {
-        offsetx = -(maxOffsetx / 100 * this->xAxisState);
-        offsety = -(maxOffsety / 100 * this->yAxisState);
+        offsetx = (maxOffsetx / 100 * this->xAxisState);
+        offsety = (maxOffsety / 100 * this->yAxisState);
     }
 
     // adjust rect with offset

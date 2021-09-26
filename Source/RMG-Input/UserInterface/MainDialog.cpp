@@ -137,23 +137,10 @@ void MainDialog::on_InputPollTimer_triggered()
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
-        switch (event.type)
-        {
-            case SDL_CONTROLLERBUTTONDOWN:
-            case SDL_CONTROLLERBUTTONUP:
-                controllerWidget->SetButtonState((SDL_GameControllerButton)event.cbutton.button, event.cbutton.state);
-                break;
-
-            case SDL_CONTROLLERAXISMOTION:
-                controllerWidget->SetAxisState((SDL_GameControllerAxis)event.caxis.axis, event.caxis.value);
-                break;
-
-            default:
-                break;
-        }
+        controllerWidget->on_MainDialog_SdlEvent(&event);
     }
 
-    controllerWidget->DrawControllerImage();
+    controllerWidget->on_MainDialog_SdlEventPollFinished();
 }
 
 void MainDialog::on_ControllerWidget_CurrentInputDeviceChanged(QString deviceName, int deviceNum)
