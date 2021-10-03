@@ -132,7 +132,6 @@ void ControllerImageWidget::paintEvent(QPaintEvent *event)
 
     // render base image first
     renderer.load(baseImageUri);
-    renderer.setAspectRatioMode(Qt::KeepAspectRatio);
     renderer.render(&painter);
 
     // render button images on top
@@ -142,14 +141,12 @@ void ControllerImageWidget::paintEvent(QPaintEvent *event)
         if (this->buttonState[(int)button.button])
         {
             renderer.load(button.imageUri);
-            renderer.setAspectRatioMode(Qt::KeepAspectRatio);
             renderer.render(&painter);
         }
     }
 
     // render analog stick
     renderer.load(analogStickImageUri);
-    renderer.setAspectRatioMode(Qt::KeepAspectRatio);
 
     QRectF rectF = renderer.viewBoxF();
     double offsetx = 0, offsety = 0;
