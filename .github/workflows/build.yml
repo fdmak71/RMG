@@ -11,7 +11,7 @@ jobs:
         run: |
           sudo apt-get -qq update
           sudo apt-get upgrade
-          sudo apt-get -y install cmake libhidapi-dev libsamplerate0-dev libminizip-dev libsdl2-dev libfreetype6-dev libgl1-mesa-dev libglu1-mesa-dev pkg-config zlib1g-dev binutils-dev libspeexdsp-dev qt5-default build-essential nasm git zip
+          sudo apt-get -y install cmake libhidapi-dev libsamplerate0-dev libminizip-dev libsdl2-dev libfreetype6-dev libgl1-mesa-dev libglu1-mesa-dev pkg-config zlib1g-dev binutils-dev libspeexdsp-dev qt5-default libqt5svg5-dev build-essential nasm git zip
       - name: Prepare Environment
         run: |
           echo "GIT_REVISION=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
@@ -43,8 +43,6 @@ jobs:
             mingw-w64-x86_64-SDL2
             mingw-w64-x86_64-hidapi
             mingw-w64-x86_64-libsamplerate
-            mingw-w64-x86_64-python3-pip
-            mingw-w64-x86_64-python3-pyopenssl
             mingw-w64-x86_64-nasm
             git
       - name: Prepare Environment
