@@ -11,9 +11,11 @@
 #include "../../Config.hpp"
 #include "../../Globals.hpp"
 #include "../Api.hpp"
-#include "../api/version.h"
 #include "Config.hpp"
 #include "Plugin.hpp"
+
+#include <Common/api/version.h>
+
 #include <QDir>
 
 using namespace M64P::Wrapper;

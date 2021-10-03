@@ -11,7 +11,8 @@
 #define VIDEXT_HPP
 
 #include "../../Thread/EmulationThread.hpp"
-#include "../api/m64p_types.h"
+
+#include <Common/api/m64p_types.h>
 
 m64p_error VidExt_Init(void);
 m64p_error VidExt_Quit(void);

@@ -69,22 +69,6 @@ ExternalProject_Add(mupen64plus-rsp-hle
     DEPENDS mupen64plus-core
 )
 
-ExternalProject_Add(mupen64plus-input-qt
-    SOURCE_DIR mupen64plus-input-qt
-
-    CMAKE_ARGS -DAPIDIR=${APIDIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-    INSTALL_COMMAND ""
-
-    GIT_REPOSITORY https://github.com/Rosalie241/mupen64plus-input-qt
-    GIT_TAG e6cacb7fe6513cac4b30f7171d8ca7d1cd5fdb81
-
-    BUILD_COMMAND make all APIDIR=${APIDIR} DEBUG=$<CONFIG:Debug>
-    BUILD_IN_SOURCE True
-    
-    BUILD_BYPRODUCTS ${THIRDPARTY_DIR}/mupen64plus-input-qt/libmupen64plus-input-qt.${SO_EXT}
-    DEPENDS mupen64plus-core
-)
-
 set(GLIDEN64_DIR "${THIRDPARTY_DIR}/mupen64plus-video-GLideN64")
 set(GLIDEN64_BUILD_DIR "${GLIDEN64_DIR}/projects/cmake")
 if (MSYS)
@@ -127,9 +111,6 @@ set(MUPEN64PLUS_PLUGIN_AUDIO ${BUILD_BYPRODUCTS} PARENT_SCOPE)
 
 ExternalProject_Get_property(mupen64plus-rsp-hle BUILD_BYPRODUCTS)
 set(MUPEN64PLUS_PLUGIN_RSP ${BUILD_BYPRODUCTS} PARENT_SCOPE)
-
-ExternalProject_Get_property(mupen64plus-input-qt BUILD_BYPRODUCTS)
-set(MUPEN64PLUS_PLUGIN_INPUT ${BUILD_BYPRODUCTS} PARENT_SCOPE)
 
 ExternalProject_Get_property(mupen64plus-video-GLideN64 BUILD_BYPRODUCTS)
 set(MUPEN64PLUS_PLUGIN_GFX ${BUILD_BYPRODUCTS} PARENT_SCOPE)

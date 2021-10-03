@@ -11,8 +11,9 @@
 #define M64P_WRAPPER_PLUGIN_HPP
 
 #include "../PluginApi.hpp"
-#include "../api/m64p_types.h"
 #include "Types.hpp"
+
+#include <Common/api/m64p_types.h>
 
 #include <QString>
 

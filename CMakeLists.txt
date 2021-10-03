@@ -17,10 +17,9 @@ execute_process(
 set(CMAKE_INSTALL_PREFIX "")
 set(INSTALL_PATH Bin/${CMAKE_BUILD_TYPE})
 
+# add projects
 add_subdirectory(Source/RMG)
-install(TARGETS RMG
-    DESTINATION ${INSTALL_PATH}
-)
+add_subdirectory(Source/RMG-Input)
 
 if (WIN32)
     add_subdirectory(Source/Installer)
@@ -31,6 +30,11 @@ if (WIN32)
 endif()
 
 add_subdirectory(Source/3rdParty)
+
+# install targets
+install(TARGETS RMG
+    DESTINATION ${INSTALL_PATH}
+)
 install(FILES ${MUPEN64PLUSCORE_LIB}
     DESTINATION ${INSTALL_PATH}/Core
 )
@@ -46,7 +50,7 @@ install(FILES ${MUPEN64PLUS_PLUGIN_AUDIO}
 install(FILES ${MUPEN64PLUS_PLUGIN_RSP}
     DESTINATION ${INSTALL_PATH}/Plugin/RSP
 )
-install(FILES ${MUPEN64PLUS_PLUGIN_INPUT}
+install(TARGETS RMG-Input
     DESTINATION ${INSTALL_PATH}/Plugin/Input
 )
 install(FILES ${MUPEN64PLUS_PLUGIN_GFX}

@@ -10,7 +10,7 @@
 #ifndef M64P_WRAPPER_TYPES_HPP
 #define M64P_WRAPPER_TYPES_HPP
 
-#include "../api/m64p_types.h"
+#include <Common/api/m64p_types.h>
 
 #include <QString>
 #include <QMetaType> 

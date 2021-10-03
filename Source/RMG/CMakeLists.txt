@@ -61,7 +61,12 @@ endif()
 
 target_link_libraries(RMG ${SDL2_LIBRARIES})
 
-target_include_directories(RMG PRIVATE ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${SDL2_INCLUDE_DIRS})
+target_include_directories(RMG PRIVATE 
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../
+    ${SDL2_INCLUDE_DIRS}
+)
 
 if(UNIX)
     target_link_libraries(RMG dl)

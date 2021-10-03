@@ -7,7 +7,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-#include "M64P/api/m64p_types.h"
+#include <Common/api/m64p_types.h>
+
 #include <M64P/Api.hpp>
 #include <M64P/Wrapper/Config.hpp>
 

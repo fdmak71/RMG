@@ -10,7 +10,7 @@
 #ifndef M64P_CONFIGAPI_HPP
 #define M64P_CONFIGAPI_HPP
 
-#include "api/m64p_config.h"
+#include <Common/api/m64p_config.h>
 
 #include <QString>
 

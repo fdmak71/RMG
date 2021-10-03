@@ -10,8 +10,8 @@
 #ifndef M64P_COREAPI_HPP
 #define M64P_COREAPI_HPP
 
-#include "api/m64p_common.h"
-#include "api/m64p_frontend.h"
+#include <Common/api/m64p_common.h>
+#include <Common/api/m64p_frontend.h>
 
 #include <QString>
 

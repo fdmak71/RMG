@@ -27,7 +27,7 @@ then
     generator="MSYS Makefiles"
 fi
 
-cmake -S "$toplvl_dir" -B "$build_dir" -DCMAKE_BUILD_TYPE="$build_config" -G "$generator"
+cmake -S "$toplvl_dir" -B "$build_dir" -DCMAKE_BUILD_TYPE="$build_config" -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -G "$generator"
 
 make install DESTDIR="$toplvl_dir" -j$threads
 
