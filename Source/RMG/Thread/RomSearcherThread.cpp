@@ -8,9 +8,9 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "RomSearcherThread.hpp"
-#include "../Globals.hpp"
+#include "Globals.hpp"
 
-#include <QDir>
+#include <QDirIterator>
 
 using namespace Thread;
 
@@ -53,47 +53,48 @@ void RomSearcherThread::run(void)
 
 void RomSearcherThread::rom_Search(QString directory)
 {
-    QDir dir(directory);
-
     QStringList filter;
     filter << "*.N64";
     filter << "*.Z64";
     filter << "*.V64";
-    filter << "*.ndd";
+    filter << "*.NDD";
     filter << "*.D64";
 
+    QDirIterator::IteratorFlag flag = this->rom_Search_Recursive ? 
+        QDirIterator::Subdirectories : 
+        QDirIterator::NoIteratorFlags;
+    QDirIterator romDirIt(directory, filter, QDir::Files, flag);
 
-    QFileInfoList fileList = dir.entryInfoList(filter, QDir::Files);
-    QFileInfo fileInfo;
     M64P::Wrapper::RomInfo_t romInfo;
-    bool ret;
 
-    for (int i = 0; i < fileList.size(); i++)
+    while (romDirIt.hasNext())
     {
-        fileInfo = fileList.at(i);
+        QString file = romDirIt.next();
 
-        ret = this->rom_Get_Info(fileInfo.absoluteFilePath(), &romInfo);
-        if (ret)
-        {
-            if (this->rom_Search_Count++ >= this->rom_Search_MaxItems)
-                return;
-
-            emit this->on_Rom_Found(romInfo);
+        if (!g_RomBrowserCache.ContainsEntry(file))
+        { // when not found in cache, try to add it
+            if (g_MupenApi.Core.GetRomInfo(file, &romInfo, true))
+            {
+                g_RomBrowserCache.AddEntry(file, romInfo);
+            }
+            else
+            { // skip file
+                continue;
+            }
         }
-    }
-
-    if (this->rom_Search_Recursive)
-    {
-        fileList = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
-
-        for (int i = 0; i < fileList.size(); i++)
-        {
-            this->rom_Search(fileList.at(i).absoluteFilePath());
+        else
+        { // when found in cache, retrieve entry
+            romInfo = g_RomBrowserCache.GetEntry(file);
         }
-    }
-}
 
-bool RomSearcherThread::rom_Get_Info(QString file, M64P::Wrapper::RomInfo_t *info)
-{
-    return g_MupenApi.Core.GetRomInfo(file, info, true);
+        // make sure we don't go over the
+        // search limit
+        this->rom_Search_Count++;
+        if (this->rom_Search_Count > this->rom_Search_MaxItems)
+        {
+            return;
+        }
+        
+        emit this->on_Rom_Found(romInfo);
+    }
 }

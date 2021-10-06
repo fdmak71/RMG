@@ -38,8 +38,7 @@ class RomSearcherThread : public QThread
     int rom_Search_Count;
 
     void rom_Search(QString);
-    bool rom_Get_Info(QString, M64P::Wrapper::RomInfo_t *);
-
+    
   signals:
     void on_Rom_Found(M64P::Wrapper::RomInfo_t);
 };

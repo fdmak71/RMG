@@ -51,11 +51,18 @@ bool MainWindow::Init(void)
     }
 
     g_Settings.LoadDefaults();
-
     QString dataDir = g_Settings.GetStringValue(SettingsID::Core_UserDataDirOverride);
     QString cacheDir = g_Settings.GetStringValue(SettingsID::Core_UserCacheDirOverride);
     if (g_Settings.GetBoolValue(SettingsID::Core_OverrideUserDirs))
+    {
         g_MupenApi.Config.OverrideUserPaths(dataDir, cacheDir);
+    }
+
+    if (!g_RomBrowserCache.Init())
+    {
+        this->ui_MessageBox("Error", "Utilities::RomBrowserCache::Init Failed", g_MupenApi.GetLastError());
+        return false;
+    }
 
     this->ui_Init();
     this->ui_Setup();

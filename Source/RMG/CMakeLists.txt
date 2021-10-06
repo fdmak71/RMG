@@ -38,6 +38,7 @@ set(RMG_SOURCES
     Utilities/Logger.cpp
     Utilities/Settings.cpp
     Utilities/Plugins.cpp
+    Utilities/RomBrowserCache.cpp
     Utilities/QtKeyToSdl2Key.cpp
     Globals.cpp
     main.cpp
