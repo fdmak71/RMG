@@ -100,6 +100,11 @@ bool MainWindow::Init(void)
     return true;
 }
 
+void MainWindow::OpenROM(QString file)
+{
+    this->emulationThread_Launch(file);
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     this->on_Action_File_EndEmulation();
@@ -442,6 +447,12 @@ void MainWindow::emulationThread_Launch(QString cartRom, QString diskRom)
         }
     }
 
+    ui_RefreshRomListAfterEmulation = this->ui_Widget_RomBrowser->IsRefreshingRomList();
+    if (ui_RefreshRomListAfterEmulation)
+    {
+        this->ui_Widget_RomBrowser->StopRefreshRomList();
+    }
+
     this->ui_AllowManualResizing = g_Settings.GetBoolValue(SettingsID::GUI_AllowManualResizing);
     this->ui_HideCursorInEmulation = g_Settings.GetBoolValue(SettingsID::GUI_HideCursorInEmulation);
 
@@ -776,7 +787,7 @@ void MainWindow::on_Action_File_OpenRom(void)
     QString dir;
 
     dialog.setFileMode(QFileDialog::FileMode::ExistingFile);
-    dialog.setNameFilter("N64 ROMs & Disks (*.n64 *.z64 *.v64 *.ndd *.d64)");
+    dialog.setNameFilter("N64 ROMs & Disks (*.n64 *.z64 *.v64 *.ndd *.d64 *.zip)");
 
     ret = dialog.exec();
     if (!ret)
@@ -811,7 +822,7 @@ void MainWindow::on_Action_File_OpenCombo(void)
     QString dir, cartRom, diskRom;
 
     dialog.setFileMode(QFileDialog::FileMode::ExistingFile);
-    dialog.setNameFilter("N64 ROMs (*.n64 *.z64 *.v64)");
+    dialog.setNameFilter("N64 ROMs (*.n64 *.z64 *.v64 *.zip)");
 
     ret = dialog.exec();
     if (!ret)
@@ -1117,6 +1128,12 @@ void MainWindow::on_Emulation_Finished(bool ret)
         // always return to the rombrowser
         this->ui_NoSwitchToRomBrowser = false;
         this->ui_InEmulation(false, false);
+    }
+
+    if (this->ui_RefreshRomListAfterEmulation)
+    {
+        this->ui_Widget_RomBrowser->RefreshRomList();
+        this->ui_RefreshRomListAfterEmulation = false;
     }
 }
 
