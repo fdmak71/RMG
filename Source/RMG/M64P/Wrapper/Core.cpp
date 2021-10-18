@@ -14,6 +14,7 @@
 #include "Config.hpp"
 #include "Plugin.hpp"
 
+#include <Common/api/version.h>
 #include <QDir>
 #include <unzip.h>
 
