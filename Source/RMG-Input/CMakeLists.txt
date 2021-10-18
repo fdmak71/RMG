@@ -21,6 +21,7 @@ set(RMG_INPUT_SOURCES
     UserInterface/MainDialog.ui
     UserInterface/MainDialog.cpp
     UserInterface/UIResources.qrc
+    Thread/SDLThread.cpp
     main.cpp
 )
 

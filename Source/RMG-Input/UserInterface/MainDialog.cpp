@@ -14,12 +14,18 @@
 #include <QTimer>
 
 using namespace UserInterface;
-#include <iostream>
 
-MainDialog::MainDialog(QWidget* parent) : QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint)
+MainDialog::MainDialog(QWidget* parent, Thread::SDLThread* sdlThread) : QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint)
 {
     this->setupUi(this);
     this->setWindowIcon(QIcon(":Resource/RMG.png"));
+
+    // setup SDL thread
+    this->sdlThread = sdlThread;
+    connect(this->sdlThread, &Thread::SDLThread::OnInputDeviceFound, this,
+        &MainDialog::on_SDLThread_DeviceFound);
+    connect(this->sdlThread, &Thread::SDLThread::OnDeviceSearchFinished, this,
+        &MainDialog::on_SDLThread_DeviceSearchFinished);
 
     // each tab needs its own ControllerWidget
     for (int i = 0; i < this->tabWidget->count(); i++)
@@ -49,6 +55,7 @@ MainDialog::MainDialog(QWidget* parent) : QDialog(parent, Qt::WindowSystemMenuHi
 
 MainDialog::~MainDialog()
 {
+    this->closeController();
 }
 
 void MainDialog::addInputDevice(QString deviceName, int deviceNum)
@@ -77,6 +84,11 @@ void MainDialog::openController(QString deviceName, int deviceNum)
         return;
     }
 
+    currentController = SDL_GameControllerOpen(deviceNum);
+    currentDeviceNum = deviceNum;
+
+    /* maybe throw this in SDLThread??
+
     // find each controller    
     for (int i = 0; i < SDL_NumJoysticks(); i++)
     {
@@ -101,6 +113,7 @@ void MainDialog::openController(QString deviceName, int deviceNum)
             }
         }
     }
+    */
 }
 
 void MainDialog::closeController()
@@ -122,7 +135,18 @@ void MainDialog::on_InputPollTimer_triggered()
     // we don't need to do anything
     if (!controllerWidget->IsPluggedIn())
     {
+        this->sdlThread->SetAction(SDLThreadAction::None);
         return;
+    }
+
+    // verify/update the SDL thread action state
+    if (this->sdlThread->GetCurrentAction() == SDLThreadAction::GetInputDevices)
+    { // don't do anything when we're querying the input devices
+        return;
+    }
+    else if (this->sdlThread->GetCurrentAction() == SDLThreadAction::None)
+    { // when the SDL thread is doing nothing, pump the sdl events instead
+        sdlThread->SetAction(SDLThreadAction::SDLPumpEvents);
     }
 
     // check if controller has been disconnected,
@@ -135,7 +159,7 @@ void MainDialog::on_InputPollTimer_triggered()
 
     // process SDL events
     SDL_Event event;
-    while (SDL_PollEvent(&event))
+    while (SDL_PeepEvents(&event, 1, SDL_GETEVENT, 0, SDL_LASTEVENT) == 1)
     {
         controllerWidget->on_MainDialog_SdlEvent(&event);
     }
@@ -151,62 +175,14 @@ void MainDialog::on_ControllerWidget_CurrentInputDeviceChanged(QString deviceNam
 
 void MainDialog::on_ControllerWidget_RefreshInputDevicesButtonClicked()
 {
-    struct inputDevice_t
+    if (this->updatingDeviceList)
     {
-        int deviceNum;
-        QString deviceName;
-
-        bool operator== (inputDevice_t other)
-        {
-            return other.deviceNum == deviceNum &&
-                other.deviceName == deviceName;
-        }
-    };
-
-    static QList<inputDevice_t> oldDeviceList;
-    QList<inputDevice_t> newDeviceList;
-
-    // force-refresh device list in SDL
-    SDL_GameControllerUpdate();
-
-    // fill newDeviceList
-    for (int i = 0; i < SDL_NumJoysticks(); i++)
-    {
-        const char* name = nullptr;
-
-        // skip non-gamecontrollers (for now)
-        if (!SDL_IsGameController(i))
-        {
-            continue;
-        }
-        
-        name = SDL_GameControllerNameForIndex(i);
-        if (name != nullptr)
-        {
-            inputDevice_t inputDevice = {i, QString(name)};
-            newDeviceList.append(inputDevice);
-        }
+        return;
     }
 
-    // compare newDeviceList with oldDeviceList
-    // and signal the changes
-    for (auto& inputDevice : newDeviceList)
-    {
-        if (!oldDeviceList.contains(inputDevice))
-        {
-            this->addInputDevice(inputDevice.deviceName, inputDevice.deviceNum);
-        }
-    }
-    for (auto& inputDevice : oldDeviceList)
-    {
-        if (!newDeviceList.contains(inputDevice))
-        {
-            this->removeInputDevice(inputDevice.deviceName, inputDevice.deviceNum);
-        }
-    }
-
-    // update oldDeviceList
-    oldDeviceList = newDeviceList;
+    this->updatingDeviceList = true;
+    inputDeviceList.clear();
+    this->sdlThread->SetAction(SDLThreadAction::GetInputDevices);
 }
 
 void MainDialog::on_tabWidget_currentChanged(int index)
@@ -223,3 +199,36 @@ void MainDialog::on_tabWidget_currentChanged(int index)
 
     this->openController(deviceName, deviceNum);
 }
+
+void MainDialog::on_SDLThread_DeviceFound(QString deviceName, int deviceNum)
+{
+    inputDevice_t inputDevice = {deviceName, deviceNum};
+    this->inputDeviceList.append(inputDevice);
+}
+
+void MainDialog::on_SDLThread_DeviceSearchFinished(void)
+{
+    // compare inputDeviceList with oldInputDeviceList
+    // and signal the changes
+    for (auto& inputDevice : this->inputDeviceList)
+    {
+        if (!this->oldInputDeviceList.contains(inputDevice))
+        {
+            this->addInputDevice(inputDevice.deviceName, inputDevice.deviceNum);
+        }
+    }
+    for (auto& inputDevice : this->oldInputDeviceList)
+    {
+        if (!this->inputDeviceList.contains(inputDevice))
+        {
+            this->removeInputDevice(inputDevice.deviceName, inputDevice.deviceNum);
+        }
+    }
+
+    // update old device list
+    this->oldInputDeviceList = this->inputDeviceList;
+
+    // we can refresh safely again
+    this->updatingDeviceList = false;
+}
+

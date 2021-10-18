@@ -14,6 +14,7 @@
 
 #include "ui_MainDialog.h"
 #include "Widget/ControllerWidget.hpp"
+#include "Thread/SDLThread.hpp"
 
 namespace UserInterface
 {
@@ -21,30 +22,50 @@ class MainDialog : public QDialog, private Ui::MainDialog
 {
 Q_OBJECT
 private:
-   QTimer* inputPollTimer;
+    struct inputDevice_t
+    {
+        QString deviceName;
+        int deviceNum;
 
-   QList<Widget::ControllerWidget*> controllerWidgets;
-   SDL_GameController* currentController = nullptr;
-   QString currentDeviceName;
-   int currentDeviceNum = 0;
+        bool operator== (inputDevice_t other)
+        {
+            return other.deviceNum == deviceNum &&
+                other.deviceName == deviceName;
+        }
+    };
 
-   void addInputDevice(QString deviceName, int deviceNum);
-   void removeInputDevice(QString deviceName, int deviceNum);
+    QTimer* inputPollTimer;
+    Thread::SDLThread* sdlThread;
 
-   void openController(QString deviceName, int deviceNum);
-   void closeController();
+    QList<inputDevice_t> oldInputDeviceList;
+    QList<inputDevice_t> inputDeviceList;
+    bool updatingDeviceList = false;
+
+    QList<Widget::ControllerWidget*> controllerWidgets;
+    SDL_GameController* currentController = nullptr;
+    QString currentDeviceName;
+    int currentDeviceNum = 0;
+
+    void addInputDevice(QString, int);
+    void removeInputDevice(QString, int);
+
+    void openController(QString, int);
+    void closeController();
 
 public:
-    MainDialog(QWidget *parent);
+    MainDialog(QWidget *parent, Thread::SDLThread*);
     ~MainDialog(void);
 
 public slots:
-   void on_InputPollTimer_triggered();
+    void on_InputPollTimer_triggered();
 
-   void on_ControllerWidget_CurrentInputDeviceChanged(QString deviceName, int deviceNum);
-   void on_ControllerWidget_RefreshInputDevicesButtonClicked();
+    void on_ControllerWidget_CurrentInputDeviceChanged(QString, int);
+    void on_ControllerWidget_RefreshInputDevicesButtonClicked();
    
-   void on_tabWidget_currentChanged(int index);
+    void on_tabWidget_currentChanged(int);
+
+    void on_SDLThread_DeviceFound(QString, int);
+    void on_SDLThread_DeviceSearchFinished(void);
 };
 }
 

@@ -7,6 +7,10 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+#include "SDL_events.h"
+#include "SDL_gamecontroller.h"
+#include "SDL_joystick.h"
+#include <chrono>
 #define M64P_PLUGIN_PROTOTYPES 1
 #define INPUT_PLUGIN_API_VERSION 0x020100
 
@@ -23,21 +27,59 @@ extern "C"
 }
 
 #include <QApplication>
+
 #include <SDL.h>
+
+#include "Thread/SDLThread.hpp"
+
+#include <iostream>
+
+//
+// Local variables
+//
+
+// You may wonder why I create a thread with SDL
+// instead of initializing SDL in PluginStartup,
+// that's because we have a config GUI which uses peepevents
+// and SDL needs SDL_PumpEvents/SDL_NumJoystick to be run in 
+// the same thread as the one it was initialized in,
+// so when you open the config GUI once, it'll work fine
+// but when you'd open it twice, it wouldn't work anymore
+// This seems like the cleanest solution and it works well
+static Thread::SDLThread *l_SDLThread = nullptr;
 
 //
 // Basic Plugin Functions
 //
 
+#include <iostream>
+
 EXPORT m64p_error CALL PluginStartup(m64p_dynlib_handle CoreLibHandle, void *Context, void (*DebugCallback)(void *, int, const char *))
 {
-    // initialize SDL
+    if (l_SDLThread != nullptr)
+    {
+        return M64ERR_ALREADY_INIT;
+    }
 
+    l_SDLThread = new Thread::SDLThread(nullptr);
+    l_SDLThread->start();
+
+    std::cout << __FUNCTION__ << std::endl;
     return M64ERR_SUCCESS;
 }
 
 EXPORT m64p_error CALL PluginShutdown(void)
 {
+    if (l_SDLThread == nullptr)
+    {
+        return M64ERR_NOT_INIT;
+    }
+
+    l_SDLThread->StopLoop();
+    l_SDLThread->deleteLater();
+    l_SDLThread = nullptr;
+
+    std::cout << __FUNCTION__ << std::endl;
     return M64ERR_SUCCESS;
 }
 
@@ -79,23 +121,18 @@ EXPORT m64p_error CALL PluginGetVersion(m64p_plugin_type *pluginType, int *plugi
 #include <iostream>
 EXPORT m64p_error CALL PluginConfig()
 {
-    if (!SDL_WasInit(SDL_INIT_GAMECONTROLLER) &&
-        SDL_Init(SDL_INIT_GAMECONTROLLER) < 0)
+    if (l_SDLThread == nullptr)
     {
-        return M64ERR_SYSTEM_FAIL;
+        return M64ERR_NOT_INIT;
     }
 
-    if (!SDL_WasInit(SDL_INIT_HAPTIC) && 
-        SDL_Init(SDL_INIT_HAPTIC) < 0)
-    {
-        return M64ERR_SYSTEM_FAIL;
-    }
+    l_SDLThread->SetAction(SDLThreadAction::SDLPumpEvents);
 
+    UserInterface::MainDialog dialog(nullptr, l_SDLThread);
+    dialog.exec();
+
+    l_SDLThread->SetAction(SDLThreadAction::None);
     
-    UserInterface::MainDialog dialog(nullptr);
-
-    std::cout << "dialog exec: " << dialog.exec() << std::endl;
-
     return M64ERR_SUCCESS;
 }
 
