@@ -50,7 +50,15 @@ void SDLThread::run(void)
 {
     // try to initialize SDL
     if (SDL_WasInit(SDL_INIT_GAMECONTROLLER) ||
-        SDL_Init(SDL_INIT_GAMECONTROLLER) < 0)
+#ifdef _WIN32
+        // for some weird reason,
+        // SDL also needs the video subsystem
+        // to be initialized to get SDL_NumJoysticks
+        // to work properly on windows
+        SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_VIDEO) < 0)
+#else
+        SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) < 0)
+#endif
     { // nothing we can do now
         return;
     }
