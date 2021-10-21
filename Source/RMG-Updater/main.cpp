@@ -9,7 +9,6 @@
  */
 #include <iostream>
 #include <filesystem>
-#include <unistd.h>
 
 void usage(char** argv)
 {
@@ -27,7 +26,7 @@ int main(int argc, char** argv)
     {
         usage(argv);
         return 1;
-	}
+    }
 
     auto source = argv[1];
     auto target = argv[2];
@@ -48,11 +47,7 @@ int main(int argc, char** argv)
     std::filesystem::copy(source, target, options);
 
     // launch executable and exit
-    pid_t pid = fork();
-    if (pid == 0)
-    { // only execute exe in child
-        system(exe);
-    }
+    system(exe);
 
     return 0;
 }
