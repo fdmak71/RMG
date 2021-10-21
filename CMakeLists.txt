@@ -18,8 +18,12 @@ set(CMAKE_INSTALL_PREFIX "")
 set(INSTALL_PATH Bin/${CMAKE_BUILD_TYPE})
 
 add_subdirectory(Source/RMG)
+add_subdirectory(Source/RMG-Updater)
 install(TARGETS RMG
     DESTINATION ${INSTALL_PATH}
+)
+install(TARGETS RMG-Updater
+    DESTINATION ${INSTALL_PATH}/../
 )
 
 if (WIN32)
