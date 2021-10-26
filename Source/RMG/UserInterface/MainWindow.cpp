@@ -41,7 +41,7 @@ MainWindow::~MainWindow()
 {
 }
 
-bool MainWindow::Init(void)
+bool MainWindow::Init(QGuiApplication *app)
 {
     if (!g_Logger.Init())
     {
@@ -113,6 +113,7 @@ bool MainWindow::Init(void)
     g_EmuThread = this->emulationThread;
 
     connect(&g_MupenApi.Core, &Core::on_Core_DebugCallback, this, &MainWindow::on_Core_DebugCallback);
+    connect(app, &QGuiApplication::applicationStateChanged, this, &MainWindow::on_QGuiApplication_applicationStateChanged);
 
     return true;
 }
@@ -765,31 +766,26 @@ void MainWindow::on_EventFilter_FileDropped(QDropEvent *event)
     this->emulationThread_Launch(file);
 }
 
-/* TODO for some day
-void MainWindow::on_EventFilter_FocusIn(QFocusEvent *event)
+void MainWindow::on_QGuiApplication_applicationStateChanged(Qt::ApplicationState state)
 {
-    std::cout << "MainWindow::on_EventFilter_FocusIn" << std::endl;
-    if (g_Settings.GetBoolValue(SettingsID::GUI_ResumeEmulationOnFocus))
+    bool isRunning = g_MupenApi.Core.IsEmulationRunning();
+    bool isPaused = g_MupenApi.Core.isEmulationPaused();
+
+    if (state == Qt::ApplicationActive)
     {
-        if (g_MupenApi.Core.isEmulationPaused())
+        if (isPaused)
+        {
             this->on_Action_System_Pause();
+        }
     }
-
-    QMainWindow::focusInEvent(event);
-}
-
-void MainWindow::on_EventFilter_FocusOut(QFocusEvent *event)
-{
-    std::cout << "MainWindow::on_EventFilter_FocusOut" << std::endl;
-    if (g_Settings.GetBoolValue(SettingsID::GUI_PauseEmulationOnFocusLoss))
+    else if (state == Qt::ApplicationInactive)
     {
-        if (g_MupenApi.Core.IsEmulationRunning())
+        if (!isPaused && isRunning)
+        {
             this->on_Action_System_Pause();
+        }
     }
-
-    QMainWindow::focusOutEvent(event);
 }
-*/
 
 void MainWindow::on_Action_File_OpenRom(void)
 {
